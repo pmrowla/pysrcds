@@ -7,6 +7,4 @@ install:
     - "pip install . --use-mirrors"
     - "pip install pylint --use-mirrors"
 # command to run tests
-script:
-    - "pylint srcds/log.py"
-    - "pylint srcds/rcon.py"
+script: "pylint --rcfile=.pylintrc srcds"

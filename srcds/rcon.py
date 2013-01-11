@@ -105,7 +105,7 @@ class RconConnection():
         else:
             response = self._recv_pkt()
         if (response.pkt_type != SERVERDATA_RESPONSE_VALUE and
-            response.pkt_type != SERVERDATA_AUTH_RESPONSE):
+                response.pkt_type != SERVERDATA_AUTH_RESPONSE):
             raise RconError('Recieved unexpected RCON packet type')
         if request and response.pkt_id != request.pkt_id:
             raise RconError('Response ID does not match request ID')

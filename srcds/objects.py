@@ -96,9 +96,10 @@ class BasePlayer(object):
 
     """Source player object"""
 
-    def __init__(self, name, uid, steam_id):
+    def __init__(self, name, uid, steam_id, team=''):
         if not isinstance(steam_id, SteamId):
             raise TypeError('Expected type SteamId for steam_id')
         self.name = name
         self.uid = uid
         self.steam_id = steam_id
+        self.team = team

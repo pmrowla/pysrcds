@@ -1,1 +1,1 @@
-"""__init__.py for the srcds package"""
+"""Python Source dedicated server library"""

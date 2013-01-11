@@ -8,6 +8,14 @@ setup(name='pysrcds',
                   ' servers',
       author='Peter Rowlands',
       author_email='peter@pmrowla.com',
-      url='',
+      url='https://github.com/pmrowla/pysrcds',
       packages=['srcds'],
+      classifiers=[
+          'Development Status :: 2 - Pre-Alpha',
+          'Intended Audience :: Developers',
+          'License :: OSI Approved :: MIT License',
+          'Programming Language :: Python',
+          'Topic :: Games/Entertainment :: First Person Shooters',
+          'Topic :: Software Development :: Libraries :: Python Modules',
+      ]
       )

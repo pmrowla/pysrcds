@@ -273,8 +273,8 @@ class PlayerTargetEvent(BaseEvent):
         super(PlayerTargetEvent, self).__init__(timestamp)
         self.player = BasePlayer(player_name, player_uid,
                                  SteamId(player_steam_id), player_team)
-        self.target = BasePlayer(player_name, player_uid,
-                                 SteamId(player_steam_id), player_team)
+        self.target = BasePlayer(target_name, target_uid,
+                                 SteamId(target_steam_id), target_team)
 
 
 class KillEvent(PlayerTargetEvent):
@@ -296,14 +296,14 @@ class KillEvent(PlayerTargetEvent):
         return ' '.join([super(KillEvent, self).__str__(), msg])
 
 
-class InjureEvent(PlayerTargetEvent):
+class AttackEvent(PlayerTargetEvent):
 
     """Player attacked event"""
 
     def __init__(self, timestamp, player_name, player_uid, player_steam_id,
                  player_team, target_name, target_uid, target_steam_id,
                  target_team, weapon, damage):
-        super(InjureEvent, self).__init__(timestamp, player_name, player_uid,
+        super(AttackEvent, self).__init__(timestamp, player_name, player_uid,
                                           player_steam_id, player_team,
                                           target_name, target_uid,
                                           target_steam_id, target_team)
@@ -315,7 +315,7 @@ class InjureEvent(PlayerTargetEvent):
                                                               self.target,
                                                               self.weapon,
                                                               self.damage)
-        return ' '.join([super(InjureEvent, self).__str__(), msg])
+        return ' '.join([super(AttackEvent, self).__str__(), msg])
 
 
 class PlayerActionEvent(PlayerEvent):

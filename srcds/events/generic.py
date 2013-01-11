@@ -1,6 +1,5 @@
 # Copyright (C) 2013 Peter Rowlands
-"""
-Generic Source engine events module
+"""Generic Source engine events module
 
 Contains event classes for all standard HL/Source server events.
 

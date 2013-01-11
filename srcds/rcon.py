@@ -15,7 +15,7 @@ SERVERDATA_EXECCOMMAND = 2
 SERVERDATA_RESPONSE_VALUE = 0
 
 
-class RconPacket():
+class RconPacket(object):
 
     """RCON packet"""
 
@@ -40,7 +40,7 @@ class RconPacket():
         return '%s%s\x00\x00' % (header, self.body)
 
 
-class RconConnection():
+class RconConnection(object):
 
     """RCON client to server connection"""
 

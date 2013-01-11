@@ -103,3 +103,7 @@ class BasePlayer(object):
         self.uid = uid
         self.steam_id = steam_id
         self.team = team
+
+    def __str__(self):
+        return "%s<%d><%s><%s>" % (self.name, self.uid, self.steam_id,
+                                   self.team)

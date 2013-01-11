@@ -1,0 +1,1 @@
+"""pysrcds events package"""

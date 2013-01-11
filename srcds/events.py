@@ -28,7 +28,14 @@ class BaseEvent(object):
 
     def __str__(self):
         """Return a valid HL Log Standard log entry string"""
-        return 'L %s:' % (self.timestamp.strftime('%m/%d/%Y - %H:%M:%S'))
+        return 'L %s:' % (self.timestamp_to_str(self.timestamp))
+
+    @classmethod
+    def timestamp_to_str(cls, timestamp):
+        """Return a valid HL Log Standard timestamp string"""
+        if not isinstance(timestamp, datetime):
+            raise TypeError('Expected datetime instance for timestamp')
+        return timestamp.strftime('%m/%d/%Y - %H:%M:%S')
 
 
 class BaseSuperLogsEvent(BaseEvent):
@@ -138,7 +145,7 @@ class PlayerActionEvent(BaseEvent):
 
     def __str__(self):
         msg = '"%s<%d><%s><%s>"' % (self.player.name, self.player.uid,
-            self.player.team)
+                                    self.player.steam_id, self.player.team)
         return ' '.join([super(PlayerActionEvent, self).__str__(), msg])
 
 
@@ -150,7 +157,7 @@ class ConnectionEvent(PlayerActionEvent):
         if not isinstance(tuple, address) or len(address) != 2:
             raise TypeError('Expected 2-tuple (host, port) for address')
         super(ConnectionEvent, self).__init__(timestamp, player_name, uid,
-            steam_id)
+                                              steam_id)
         self.address = address
 
     def __str__(self):
@@ -162,17 +169,102 @@ class ValidationEvent(PlayerActionEvent):
 
     """Player validation event"""
 
-    def __init__(self, timestamp, player_name, uid, steam_id):
-        super(ValidationEvent, self).__init__(timestamp, player_name, uid,
-            steam_id)
-
     def __str__(self):
         msg = 'STEAM USERID validated'
         return ' '.join([super(ValidationEvent, self).__str__(), msg])
 
 
-class EnterGameEvent(BaseEvent):
+class EnterGameEvent(PlayerActionEvent):
 
     """Player entered game event"""
 
-    pass
+    def __str__(self):
+        msg = 'entered the game'
+        return ' '.join([super(EnterGameEvent, self).__str__(), msg])
+
+
+class DisconnectionEvent(PlayerActionEvent):
+
+    """Player disconnected event"""
+
+    def __str__(self):
+        msg = 'disconnected'
+        return ' '.join([super(DisconnectionEvent, self).__str__(), msg])
+
+
+class KickEvent(PlayerActionEvent):
+
+    """Player kicked by console event"""
+
+    def __init__(self, timestamp, player_name, uid, steam_id, message):
+        super(KickEvent, self).__init__(timestamp, player_name, uid,
+                                        steam_id)
+        self.message = message
+
+    def __str__(self):
+        return ' '.join([
+            'L %s:' % (self.timestamp_to_str(self.timestamp)),
+            'Kick: "%s<%d><%s><%s>"' % (self.player.name, self.player.uid,
+                                        self.player.steam_id,
+                                        self.player.team),
+            'was kicked by "Console" (message "%s")' % (self.message)
+        ])
+
+
+class SuicideEvent(PlayerActionEvent):
+
+    """Player suicide event"""
+
+    def __init__(self, timestamp, player_name, uid, steam_id, team, weapon):
+        super(SuicideEvent, self).__init__(timestamp, player_name, uid,
+                                           steam_id, team)
+        self.weapon = weapon
+
+    def __str__(self):
+        msg = 'committed suicide with "%s"' % (self.weapon)
+        return ' '.join([super(SuicideEvent, self).__str__(), msg])
+
+
+class TeamSelectionEvent(PlayerActionEvent):
+
+    """Player team select event"""
+
+    def __init__(self, timestamp, player_name, uid, steam_id, team,
+                 new_team):
+        super(TeamSelectionEvent, self).__init__(timestamp, player_name, uid,
+                                                 steam_id, team)
+        self.new_team = new_team
+
+    def __str__(self):
+        msg = 'joined team "%s"' % (self.new_team)
+        return ' '.join([super(TeamSelectionEvent, self).__str__(), msg])
+
+
+class RoleSelectionEvent(PlayerActionEvent):
+
+    """Player role select event"""
+
+    def __init__(self, timestamp, player_name, uid, steam_id, team,
+                 role):
+        super(RoleSelectionEvent, self).__init__(timestamp, player_name, uid,
+                                                 steam_id, team)
+        self.role = role
+
+    def __str__(self):
+        msg = 'changed role to "%s"' % (self.role)
+        return ' '.join([super(RoleSelectionEvent, self).__str__(), msg])
+
+
+class ChangeNameEvent(PlayerActionEvent):
+
+    """Player name changed event"""
+
+    def __init__(self, timestamp, player_name, uid, steam_id, team,
+                 new_name):
+        super(ChangeNameEvent, self).__init__(timestamp, player_name, uid,
+                                              steam_id, team)
+        self.new_name = new_name
+
+    def __str__(self):
+        msg = 'changed name to "%s"' % (self.new_name)
+        return ' '.join([super(ChangeNameEvent, self).__str__(), msg])

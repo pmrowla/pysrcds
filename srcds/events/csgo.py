@@ -11,6 +11,27 @@ from .generic import (BaseEvent, PlayerEvent, PlayerTargetEvent, KillEvent,
                       AttackEvent)
 
 
+class SwitchTeamEvent(PlayerEvent):
+
+    """Player switched team event"""
+
+    regex = ''.join([
+        r'"(?P<player_name>.*)<(?P<uid>\d*)><(?P<steam_id>[\w:]*)>" ',
+        r'switched from team <(?P<orig_team>\w*)> to <(?P<new_team>\w*)>',
+    ])
+
+    def __init__(self, timestamp, player_name, uid, steam_id, orig_team,
+                 new_team):
+        super(SwitchTeamEvent, self).__init__(timestamp, player_name, uid,
+                                              steam_id, team=None)
+        self.orig_team = orig_team
+        self.new_team = new_team
+
+    def __str__(self):
+        msg = 'switched from team <%s> to <%s>' % (self.orig_team, self.new_team)
+        return ' '.join([super(SwitchTeamEvent, self).__str__(), msg])
+
+
 class BuyEvent(PlayerEvent):
 
     """Player buy event"""
@@ -36,7 +57,7 @@ class ThrowEvent(PlayerEvent):
 
     regex = ''.join([
         PlayerEvent.regex,
-        r'threw (?P<grenade>\w*) \[(?<location>-?\d+ -?\d+ -?\d+)\]',
+        r'threw (?P<nade>\w*) \[(?P<location>-?\d+ -?\d+ -?\d+)\]',
     ])
 
     def __init__(self, timestamp, player_name, uid, steam_id, team, nade,
@@ -53,6 +74,15 @@ class ThrowEvent(PlayerEvent):
                                        self.location[1], self.location[2])
         return ' '.join([super(ThrowEvent, self).__str__(), msg])
 
+    @classmethod
+    def from_re_match(cls, match):
+        """Return an event constructed from a self.regex match"""
+        kwargs = match.groupdict()
+        location = kwargs['location'].split()
+        kwargs['location'] = (int(location[0]), int(location[1]),
+                              int(location[2]))
+        return cls(**kwargs)
+
 
 class CsgoKillEvent(KillEvent):
 
@@ -61,10 +91,10 @@ class CsgoKillEvent(KillEvent):
     regex = ''.join([
         BaseEvent.regex,
         PlayerTargetEvent.player_regex,
-        r'\[(?<player_location>-?\d+ -?\d+ -?\d+)\]',
+        r'\[(?P<player_location>-?\d+ -?\d+ -?\d+)\]',
         r' killed ',
         PlayerTargetEvent.target_regex,
-        r'\[(?<target_location>-?\d+ -?\d+ -?\d+)\]',
+        r'\[(?P<target_location>-?\d+ -?\d+ -?\d+)\]',
         r' with "(?P<weapon>\w*)"',
         r'( \(headshot\))?',
     ])
@@ -72,11 +102,12 @@ class CsgoKillEvent(KillEvent):
     def __init__(self, timestamp, player_name, player_uid, player_steam_id,
                  player_team, player_location, target_name, target_uid,
                  target_steam_id, target_team, target_location, weapon,
-                 headshot):
+                 headshot=False):
         super(CsgoKillEvent, self).__init__(timestamp, player_name, player_uid,
                                             player_steam_id, player_team,
                                             target_name, target_uid,
-                                            target_steam_id, target_team)
+                                            target_steam_id, target_team,
+                                            weapon)
         if (not isinstance(player_location, tuple)
                 or not len(player_location) == 3):
             raise TypeError('Expected 3-tuple for player_location')
@@ -85,7 +116,6 @@ class CsgoKillEvent(KillEvent):
             raise TypeError('Expected 3-tuple for target_location')
         self.player_location = player_location
         self.target_location = target_location
-        self.weapon = weapon
         self.headshot = headshot
 
     def __str__(self):
@@ -104,6 +134,22 @@ class CsgoKillEvent(KillEvent):
             msg.append('(headshot)')
         return ' '.join(msg)
 
+    @classmethod
+    def from_re_match(cls, match):
+        """Return an event constructed from a self.regex match"""
+        kwargs = match.groupdict()
+        player_location = kwargs['player_location'].split()
+        kwargs['player_location'] = (int(player_location[0]),
+                                     int(player_location[1]),
+                                     int(player_location[2]))
+        target_location = kwargs['target_location'].split()
+        kwargs['target_location'] = (int(target_location[0]),
+                                     int(target_location[1]),
+                                     int(target_location[2]))
+        if match.string.endswith('(headshot)'):
+            kwargs['headshot'] = True
+        return cls(**kwargs)
+
 
 class CsgoAttackEvent(AttackEvent):
 
@@ -112,16 +158,16 @@ class CsgoAttackEvent(AttackEvent):
     regex = ''.join([
         BaseEvent.regex,
         PlayerTargetEvent.player_regex,
-        r'\[(?<player_location>-?\d+ -?\d+ -?\d+)\]',
+        r'\[(?P<player_location>-?\d+ -?\d+ -?\d+)\]',
         r' attacked ',
         PlayerTargetEvent.target_regex,
-        r'\[(?<target_location>-?\d+ -?\d+ -?\d+)\]',
+        r'\[(?P<target_location>-?\d+ -?\d+ -?\d+)\]',
         r' with "(?P<weapon>\w*)"',
         r' \(damage "(?P<damage>\d+)"\)',
         r' \(damage_armor "(?P<damage_armor>\d+)"\)',
         r' \(health "(?P<health>\d+)"\)',
         r' \(armor "(?P<armor>\d+)"\)',
-        r' \(hitgroup "(?P<hitgroup>\w+)"\)',
+        r' \(hitgroup "(?P<hitgroup>[\w ]+)"\)',
     ])
 
     def __init__(self, timestamp, player_name, player_uid, player_steam_id,
@@ -132,7 +178,7 @@ class CsgoAttackEvent(AttackEvent):
                                               player_uid, player_steam_id,
                                               player_team, target_name,
                                               target_uid, target_steam_id,
-                                              target_team)
+                                              target_team, weapon, damage)
         if (not isinstance(player_location, tuple)
                 or not len(player_location) == 3):
             raise TypeError('Expected 3-tuple for player_location')
@@ -141,11 +187,9 @@ class CsgoAttackEvent(AttackEvent):
             raise TypeError('Expected 3-tuple for target_location')
         self.player_location = player_location
         self.target_location = target_location
-        self.weapon = weapon
-        self.damage = damage
-        self.damage_armor = damage_armor
-        self.health = health
-        self.armor = armor
+        self.damage_armor = int(damage_armor)
+        self.health = int(health)
+        self.armor = int(armor)
         self.hitgroup = hitgroup
 
     def __str__(self):
@@ -166,3 +210,17 @@ class CsgoAttackEvent(AttackEvent):
             '(hitgroup "%s")' % (self.hitgroup),
         ]
         return ' '.join(msg)
+
+    @classmethod
+    def from_re_match(cls, match):
+        """Return an event constructed from a self.regex match"""
+        kwargs = match.groupdict()
+        player_location = kwargs['player_location'].split()
+        kwargs['player_location'] = (int(player_location[0]),
+                                     int(player_location[1]),
+                                     int(player_location[2]))
+        target_location = kwargs['target_location'].split()
+        kwargs['target_location'] = (int(target_location[0]),
+                                     int(target_location[1]),
+                                     int(target_location[2]))
+        return cls(**kwargs)

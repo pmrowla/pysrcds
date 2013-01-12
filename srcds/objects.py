@@ -120,5 +120,11 @@ class BasePlayer(object):
         self.team = team
 
     def __str__(self):
-        return "%s<%d><%s><%s>" % (self.name, self.uid, self.steam_id,
-                                   self.team)
+        msg = [
+            self.name,
+            '<%d>' % self.uid,
+            '<%s>' % self.steam_id,
+        ]
+        if self.team is not None:
+            msg.append('<%s>' % self.team)
+        return ''.join(msg)

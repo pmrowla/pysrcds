@@ -7,12 +7,18 @@ Contains event classes for CS:S and CS:GO events
 
 from __future__ import absolute_import
 
-from .generic import PlayerEvent, KillEvent, AttackEvent
+from .generic import (BaseEvent, PlayerEvent, PlayerTargetEvent, KillEvent,
+                      AttackEvent)
 
 
 class BuyEvent(PlayerEvent):
 
     """Player buy event"""
+
+    regex = ''.join([
+        PlayerEvent.regex,
+        r'purchased "(?P<item>\w*)"',
+    ])
 
     def __init__(self, timestamp, player_name, uid, steam_id, team, item):
         super(BuyEvent, self).__init__(timestamp, player_name, uid, steam_id,
@@ -27,6 +33,11 @@ class BuyEvent(PlayerEvent):
 class ThrowEvent(PlayerEvent):
 
     """Player threw grenade event"""
+
+    regex = ''.join([
+        PlayerEvent.regex,
+        r'threw (?P<grenade>\w*) \[(?<location>-?\d+ -?\d+ -?\d+)\]',
+    ])
 
     def __init__(self, timestamp, player_name, uid, steam_id, team, nade,
                  location):
@@ -46,6 +57,17 @@ class ThrowEvent(PlayerEvent):
 class CsGoKillEvent(KillEvent):
 
     """CS:GO specific kill event"""
+
+    regex = ''.join([
+        BaseEvent.regex,
+        PlayerTargetEvent.player_regex,
+        r'\[(?<player_location>-?\d+ -?\d+ -?\d+)\]',
+        r' killed ',
+        PlayerTargetEvent.target_regex,
+        r'\[(?<target_location>-?\d+ -?\d+ -?\d+)\]',
+        r' with "(?P<weapon>\w*)"',
+        r'( \(headshot\))?',
+    ])
 
     def __init__(self, timestamp, player_name, player_uid, player_steam_id,
                  player_team, player_location, target_name, target_uid,
@@ -86,6 +108,21 @@ class CsGoKillEvent(KillEvent):
 class CsGoAttackEvent(AttackEvent):
 
     """CS:GO specific attack event"""
+
+    regex = ''.join([
+        BaseEvent.regex,
+        PlayerTargetEvent.player_regex,
+        r'\[(?<player_location>-?\d+ -?\d+ -?\d+)\]',
+        r' attacked ',
+        PlayerTargetEvent.target_regex,
+        r'\[(?<target_location>-?\d+ -?\d+ -?\d+)\]',
+        r' with "(?P<weapon>\w*)"',
+        r' \(damage "(?P<damage>\d+)"\)',
+        r' \(damage_armor "(?P<damage_armor>\d+)"\)',
+        r' \(health "(?P<health>\d+)"\)',
+        r' \(armor "(?P<armor>\d+)"\)',
+        r' \(hitgroup "(?P<hitgroup>\w+)"\)',
+    ])
 
     def __init__(self, timestamp, player_name, player_uid, player_steam_id,
                  player_team, player_location, target_name, target_uid,

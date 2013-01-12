@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='pysrcds',
-      version='0.0.0',
+      version='0.0.1',
       description='Python library for interacting with Source engine dedicated'
                   ' servers',
       author='Peter Rowlands',
@@ -17,5 +17,5 @@ setup(name='pysrcds',
           'Programming Language :: Python',
           'Topic :: Games/Entertainment :: First Person Shooters',
           'Topic :: Software Development :: Libraries :: Python Modules',
-      ]
-      )
+     ]
+    )

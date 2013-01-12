@@ -54,7 +54,7 @@ class ThrowEvent(PlayerEvent):
         return ' '.join([super(ThrowEvent, self).__str__(), msg])
 
 
-class CsGoKillEvent(KillEvent):
+class CsgoKillEvent(KillEvent):
 
     """CS:GO specific kill event"""
 
@@ -73,7 +73,7 @@ class CsGoKillEvent(KillEvent):
                  player_team, player_location, target_name, target_uid,
                  target_steam_id, target_team, target_location, weapon,
                  headshot):
-        super(CsGoKillEvent, self).__init__(timestamp, player_name, player_uid,
+        super(CsgoKillEvent, self).__init__(timestamp, player_name, player_uid,
                                             player_steam_id, player_team,
                                             target_name, target_uid,
                                             target_steam_id, target_team)
@@ -105,7 +105,7 @@ class CsGoKillEvent(KillEvent):
         return ' '.join(msg)
 
 
-class CsGoAttackEvent(AttackEvent):
+class CsgoAttackEvent(AttackEvent):
 
     """CS:GO specific attack event"""
 
@@ -128,7 +128,7 @@ class CsGoAttackEvent(AttackEvent):
                  player_team, player_location, target_name, target_uid,
                  target_steam_id, target_team, target_location, weapon,
                  damage, damage_armor, health, armor, hitgroup):
-        super(CsGoAttackEvent, self).__init__(timestamp, player_name,
+        super(CsgoAttackEvent, self).__init__(timestamp, player_name,
                                               player_uid, player_steam_id,
                                               player_team, target_name,
                                               target_uid, target_steam_id,

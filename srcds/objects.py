@@ -55,20 +55,33 @@ class SteamId(object):
         elif not isinstance(steam_id, str):
             raise TypeError('Invalid type for steam_id')
         else:
-            match = re.match(r'STEAM_([0-5]):[0-1]:(\d+)', steam_id, re.I)
-            if not match:
-                raise ValueError('Invalid string steam_id')
-            self.universe = int(match.group(0))
-            self.instance = 1   # Valve wiki says this is 1 for user accounts
-            self.id_type = STEAM_ACCOUNT_TYPE['individual']
-            self.id_number = int(match.group(1))
+            if steam_id == 'BOT':
+                self.is_bot = True
+            else:
+                self.is_bot = False
+                pattern = ''.join([
+                    r'STEAM_(?P<universe>[0-5]):(?P<id_type>\d+):',
+                    r'(?P<id_number>\d+)',
+                ])
+                match = re.match(pattern, steam_id, re.I)
+                if not match:
+                    raise ValueError('Invalid string steam_id')
+                self.universe = int(match.groupdict()['universe'])
+                self.instance = 1
+                self.id_type = int(match.groupdict()['id_type'])
+                self.id_number = int(match.groupdict()['id_number'])
 
     def __str__(self):
-        return self.id64_to_str(self.id64())
+        if self.is_bot:
+            return 'BOT'
+        else:
+            return self.id64_to_str(self.id64())
 
     def id64(self):
         """Return the SteamID64 for this ID"""
-        id64 = self.id_type
+        if self.is_bot:
+            return 0
+        id64 = self.id_number
         id64 |= self.instance << 32
         id64 |= self.id_type << 52
         id64 |= self.universe << 56
@@ -77,10 +90,10 @@ class SteamId(object):
     @classmethod
     def id64_to_str(cls, id64, universe=STEAM_ACCOUNT_UNIVERSE['public']):
         """Convert a SteamID64 to a STEAM_X:Y:Z string"""
-        y = id64 % 2
-        z = ((id64 & 0xffffffff) - y) // 2
-        x = universe
-        return 'STEAM_%d:%d:%d' % (x, y, z)
+        y_part = id64 >> 52 & 0xf
+        z_part = id64 & 0xffffffff
+        x_part = universe
+        return 'STEAM_%d:%d:%d' % (x_part, y_part, z_part)
 
     @classmethod
     def split_id64(cls, id64):
@@ -100,6 +113,8 @@ class BasePlayer(object):
         if not isinstance(steam_id, SteamId):
             raise TypeError('Expected type SteamId for steam_id')
         self.name = name
+        if isinstance(uid, str):
+            uid = int(uid)
         self.uid = uid
         self.steam_id = steam_id
         self.team = team

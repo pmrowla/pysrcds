@@ -9,7 +9,7 @@ setup(name='pysrcds',
       author='Peter Rowlands',
       author_email='peter@pmrowla.com',
       url='https://github.com/pmrowla/pysrcds',
-      packages=['srcds'],
+      packages=['srcds', 'srcds/events'],
       classifiers=[
           'Development Status :: 2 - Pre-Alpha',
           'Intended Audience :: Developers',

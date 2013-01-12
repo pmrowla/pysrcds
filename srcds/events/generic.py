@@ -214,29 +214,34 @@ class ConnectionEvent(PlayerEvent):
 
     regex = ''.join([
         PlayerEvent.regex,
-        r'connected, address "((?P<address>none)|(?P<host>\w*):(?P<port>\d*))"'
+        r'connected, address "((?P<address>none)|(?P<host>\d+(\.\d+){3}):(?P<port>\d*))"'
     ])
 
-    def __init__(self, timestamp, player_name, uid, steam_id, address):
-        if (not isinstance(tuple, address) or len(address) != 2
-                and not address == 'none'):
-            raise TypeError('Expected 2-tuple (host, port) for address')
+    def __init__(self, timestamp, player_name, uid, steam_id, team, address):
+        if (address == 'none' or
+                (isinstance(address, tuple) and len(address) == 2)):
+            self.address = address
+        else:
+            raise TypeError('Expected 2-tuple (host, port) for address: %s', address)
         super(ConnectionEvent, self).__init__(timestamp, player_name, uid,
-                                              steam_id)
-        self.address = address
+                                              steam_id, team)
 
     def __str__(self):
-        msg = 'connected, address "%s:%d"' % (self.address[0], self.address[1])
+        if isinstance(self.address, str):
+            msg = 'connected, address "%s"' % (self.address)
+        else:
+            msg = 'connected, address "%s:%d"' % (self.address[0],
+                                                  self.address[1])
         return ' '.join([super(ConnectionEvent, self).__str__(), msg])
 
     @classmethod
     def from_re_match(cls, match):
         """Return an event constructed from a self.regex match"""
         kwargs = match.groupdict()
-        if not kwargs.has_key('address'):
-            kwargs['address'] = (kwargs['host'], kwargs['port'])
-            del kwargs['host']
-            del kwargs['port']
+        if kwargs['address'] != 'none':
+            kwargs['address'] = (kwargs['host'], int(kwargs['port']))
+        del kwargs['host']
+        del kwargs['port']
         return cls(**kwargs)
 
 
@@ -290,12 +295,12 @@ class KickEvent(PlayerEvent):
         BaseEvent.regex,
         r'Kick: "(?P<player_name>.*)<(?P<uid>\d*)><(?P<steam_id>[\w:]*)>',
         r'<(?P<team>\w*)>" was kicked by "Console" ',
-        r'(message "(?P<message>.*)")',
+        r'\(message "(?P<message>.*)"\)',
     ])
 
-    def __init__(self, timestamp, player_name, uid, steam_id, message):
+    def __init__(self, timestamp, player_name, uid, steam_id, team, message):
         super(KickEvent, self).__init__(timestamp, player_name, uid,
-                                        steam_id)
+                                        steam_id, team)
         self.message = message
 
     def __str__(self):
@@ -455,7 +460,7 @@ class AttackEvent(PlayerTargetEvent):
                                           target_name, target_uid,
                                           target_steam_id, target_team)
         self.weapon = weapon
-        self.damage = damage
+        self.damage = int(damage)
 
     def __str__(self):
         msg = '"%s" attacked "%s" with "%s" (damage "%d")' % (self.player,
@@ -545,6 +550,14 @@ class ChatEvent(PlayerEvent):
             msg = 'say "%s"' % (self.message)
         return ' '.join([super(ChatEvent, self).__str__(), msg])
 
+    @classmethod
+    def from_re_match(cls, match):
+        """Return an event constructed from a self.regex match"""
+        kwargs = match.groupdict()
+        if match.string.find('say_team') >= 0:
+            kwargs['say_team'] = True
+        return cls(**kwargs)
+
 
 class TeamAllianceEvent(BaseEvent):
 
@@ -573,14 +586,14 @@ class RoundEndTeamEvent(BaseEvent):
     regex = ''.join([
         BaseEvent.regex,
         r'Team "(?P<team>\w*)" scored "(?P<score>\d+)" with ',
-        r'"(?P<players>\d+)" players',
+        r'"(?P<num_players>\d+)" players',
     ])
 
     def __init__(self, timestamp, team, score, num_players):
         super(RoundEndTeamEvent, self).__init__(timestamp)
         self.team = team
-        self.score = score
-        self.num_players = num_players
+        self.score = int(score)
+        self.num_players = int(num_players)
 
     def __str__(self):
         msg = 'Team "%s" scored "%d" with "%d" players' % (self.team,
@@ -612,7 +625,7 @@ class PrivateChatEvent(PlayerTargetEvent):
         self.message = message
 
     def __str__(self):
-        msg = '"%s" tell "%s" message "%d"' % (self.player, self.target,
+        msg = '"%s" tell "%s" message "%s"' % (self.player, self.target,
                                                self.message)
         return ' '.join([super(PrivateChatEvent, self).__str__(), msg])
 
@@ -624,13 +637,14 @@ class RoundEndPlayerEvent(PlayerEvent):
     regex = ''.join([
         BaseEvent.regex,
         r'Player "(?P<player_name>.*)<(?P<uid>\d*)><(?P<steam_id>[\w:]*)>',
+        r'<(?P<team>\w*)>"\s*',
         r'scored "(?P<score>\d+)"',
     ])
 
     def __init__(self, timestamp, player_name, uid, steam_id, team, score):
         super(RoundEndPlayerEvent, self).__init__(timestamp, player_name, uid,
                                                   steam_id, team)
-        self.score = score
+        self.score = int(score)
 
     def __str__(self):
         return ' '.join([

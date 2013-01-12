@@ -47,6 +47,8 @@ class SteamId(object):
                 or as a 64-bit integer.
 
         """
+        self.is_bot = False
+        self.is_console = False
         if isinstance(steam_id, int):
             (self.id_number,
              self.instance,
@@ -57,15 +59,16 @@ class SteamId(object):
         else:
             if steam_id == 'BOT':
                 self.is_bot = True
+            elif steam_id == 'Console':
+                self.is_console == True
             else:
-                self.is_bot = False
                 pattern = ''.join([
                     r'STEAM_(?P<universe>[0-5]):(?P<id_type>\d+):',
                     r'(?P<id_number>\d+)',
                 ])
                 match = re.match(pattern, steam_id, re.I)
                 if not match:
-                    raise ValueError('Invalid string steam_id')
+                    raise ValueError('Invalid string steam_id: %s' % steam_id)
                 self.universe = int(match.groupdict()['universe'])
                 self.instance = 1
                 self.id_type = int(match.groupdict()['id_type'])
@@ -74,12 +77,14 @@ class SteamId(object):
     def __str__(self):
         if self.is_bot:
             return 'BOT'
+        elif self.is_console:
+            return 'Console'
         else:
             return self.id64_to_str(self.id64())
 
     def id64(self):
         """Return the SteamID64 for this ID"""
-        if self.is_bot:
+        if self.is_bot or self.is_console:
             return 0
         id64 = self.id_number
         id64 |= self.instance << 32

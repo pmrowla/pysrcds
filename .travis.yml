@@ -7,4 +7,4 @@ install:
     - "pip install . --use-mirrors"
     - "pip install pylint --use-mirrors"
 # command to run tests
-script: "pylint -E --rcfile=.pylintrc srcds"
+script: "pylint -E --rcfile=.pylintrc srcds && nosetests"

@@ -9,6 +9,7 @@ Complies with the HL Log Standard rev. 1.03
 
 from __future__ import absolute_import
 from datetime import datetime
+import re
 
 from ..objects import BasePlayer, SteamId
 
@@ -19,13 +20,17 @@ class BaseEvent(object):
 
     regex = ''.join([
         r'^L (?P<timestamp>(0[0-9]|1[0-2])/([0-1][0-9]|3[0-1])/\d{4} - ',
-        r'([0-1][0-9]|2[0-3]):([0-5][0-9]|60){2}):\s*',
+        r'([0-1][0-9]|2[0-3])(:[0-5][0-9]|60){2}):\s*',
     ])
 
     def __init__(self, timestamp):
-        if not isinstance(timestamp, datetime):
-            raise TypeError('Expected datetime instance for timestamp')
-        self.timestamp = timestamp
+        if isinstance(timestamp, datetime):
+            self.timestamp = timestamp
+        elif isinstance(timestamp, str):
+            self.timestamp = datetime.strptime(timestamp,
+                                               '%m/%d/%Y - %H:%M:%S')
+        else:
+            raise TypeError('Unexpected type for timestamp')
 
     def __str__(self):
         """Return a valid HL Log Standard log entry string"""
@@ -38,13 +43,10 @@ class BaseEvent(object):
             raise TypeError('Expected datetime instance for timestamp')
         return timestamp.strftime('%m/%d/%Y - %H:%M:%S')
 
-
-class BaseSuperLogsEvent(BaseEvent):
-
-    """Base SuperLogs event class"""
-
-    def __init__(self, timestamp):
-        super(BaseSuperLogsEvent, self).__init__(timestamp)
+    @classmethod
+    def from_re_match(cls, match):
+        """Return an event constructed from a self.regex match"""
+        return cls(**match.groupdict())
 
 
 class CvarEvent(BaseEvent):
@@ -72,16 +74,26 @@ class CvarEvent(BaseEvent):
             msg = 'Server cvar "%s" = "%s"' % (self.cvar, self.value)
         return ' '.join([super(CvarEvent, self).__str__(), msg])
 
+    @classmethod
+    def from_re_match(cls, match):
+        """Return an event constructed from a self.regex match"""
+        kwargs = match.groupdict()
+        if match.string.find('start') >= 0:
+            kwargs['start'] = True
+        elif match.string.find('end') >= 0:
+            kwargs['end'] = True
+        return cls(**kwargs)
+
 
 class LogFileEvent(BaseEvent):
 
+    """Log file change event"""
+
     regex = ''.join([
         BaseEvent.regex,
-        r'Log file (closed|started \(file "(?P<filename>\w*)"\) ',
-        r'\(game "(?P<game>\w*)"\) \(version "(?P<version>.*)"\))',
+        r'Log file (closed|started \(file "(?P<filename>.*)"\) ',
+        r'\(game "(?P<game>.*)"\) \(version "(?P<version>.*)"\))',
     ])
-
-    """Log file change event"""
 
     def __init__(self, timestamp, filename='', game='', version='',
                  started=False, closed=False):
@@ -102,16 +114,26 @@ class LogFileEvent(BaseEvent):
             msg = 'Log file closed'
         return ' '.join([super(LogFileEvent, self).__str__(), msg])
 
+    @classmethod
+    def from_re_match(cls, match):
+        """Return an event constructed from a self.regex match"""
+        kwargs = match.groupdict()
+        if match.string.endswith('closed'):
+            kwargs['closed'] = True
+        else:
+            kwargs['started'] = True
+        return cls(**kwargs)
+
 
 class ChangeMapEvent(BaseEvent):
+
+    """Map change event"""
 
     regex = ''.join([
         BaseEvent.regex,
         r'Log file (closed|started \(file "(?P<filename>\w*)"\) ',
         r'\(game "(?P<game>\w*)"\) \(version "(?P<version>.*)"\))',
     ])
-
-    """Map change event"""
 
     def __init__(self, timestamp, mapname, loading=False, started=False,
                  crc=''):
@@ -158,16 +180,24 @@ class RconEvent(BaseEvent):
                 self.password, self.address[0], self.address[1])
         return ' '.join([super(RconEvent, self).__str__(), msg])
 
+    @classmethod
+    def from_re_match(cls, match):
+        """Return an event constructed from a self.regex match"""
+        kwargs = match.groupdict()
+        if not match.string.startswith('Bad'):
+            kwargs['passed'] = True
+        return cls(**kwargs)
+
 
 class PlayerEvent(BaseEvent):
+
+    """Base class for events involving a single player"""
 
     regex = ''.join([
         BaseEvent.regex,
         r'"(?P<player_name>.*)<(?P<uid>\d*)><(?P<steam_id>[\w:]*)>',
         r'<(?P<team>\w*)>"\s*',
     ])
-
-    """Base class for events involving a single player"""
 
     def __init__(self, timestamp, player_name, uid, steam_id, team=''):
         super(PlayerEvent, self).__init__(timestamp)
@@ -180,15 +210,16 @@ class PlayerEvent(BaseEvent):
 
 class ConnectionEvent(PlayerEvent):
 
-    regex = ''.join([
-        PlayerEvent.regex,
-        r'connected, address "(?P<host>\w*):(?P<port>\d*)"'
-    ])
-
     """Player connection event"""
 
+    regex = ''.join([
+        PlayerEvent.regex,
+        r'connected, address "((?P<address>none)|(?P<host>\w*):(?P<port>\d*))"'
+    ])
+
     def __init__(self, timestamp, player_name, uid, steam_id, address):
-        if not isinstance(tuple, address) or len(address) != 2:
+        if (not isinstance(tuple, address) or len(address) != 2
+                and not address == 'none'):
             raise TypeError('Expected 2-tuple (host, port) for address')
         super(ConnectionEvent, self).__init__(timestamp, player_name, uid,
                                               steam_id)
@@ -197,6 +228,16 @@ class ConnectionEvent(PlayerEvent):
     def __str__(self):
         msg = 'connected, address "%s:%d"' % (self.address[0], self.address[1])
         return ' '.join([super(ConnectionEvent, self).__str__(), msg])
+
+    @classmethod
+    def from_re_match(cls, match):
+        """Return an event constructed from a self.regex match"""
+        kwargs = match.groupdict()
+        if not kwargs.has_key('address'):
+            kwargs['address'] = (kwargs['host'], kwargs['port'])
+            del kwargs['host']
+            del kwargs['port']
+        return cls(**kwargs)
 
 
 class ValidationEvent(PlayerEvent):
@@ -243,14 +284,14 @@ class DisconnectionEvent(PlayerEvent):
 
 class KickEvent(PlayerEvent):
 
+    """Player kicked by console event"""
+
     regex = ''.join([
         BaseEvent.regex,
         r'Kick: "(?P<player_name>.*)<(?P<uid>\d*)><(?P<steam_id>[\w:]*)>',
         r'<(?P<team>\w*)>" was kicked by "Console" ',
         r'(message "(?P<message>.*)")',
     ])
-
-    """Player kicked by console event"""
 
     def __init__(self, timestamp, player_name, uid, steam_id, message):
         super(KickEvent, self).__init__(timestamp, player_name, uid,
@@ -290,7 +331,7 @@ class TeamSelectionEvent(PlayerEvent):
 
     regex = ''.join([
         PlayerEvent.regex,
-        r'joined team "(?P<team>\w*)"',
+        r'joined team "(?P<new_team>\w*)"',
     ])
 
     def __init__(self, timestamp, player_name, uid, steam_id, team,
@@ -637,3 +678,32 @@ class WeaponPickupEvent(PlayerEvent):
     def __str__(self):
         msg = 'acquired weapon "%s"' % (self.weapon)
         return ' '.join([super(WeaponPickupEvent, self).__str__(), msg])
+
+
+STANDARD_EVENTS = [
+    CvarEvent,
+    LogFileEvent,
+    ChangeMapEvent,
+    RconEvent,
+    ConnectionEvent,
+    ValidationEvent,
+    EnterGameEvent,
+    DisconnectionEvent,
+    KickEvent,
+    SuicideEvent,
+    TeamSelectionEvent,
+    RoleSelectionEvent,
+    ChangeNameEvent,
+    KillEvent,
+    AttackEvent,
+    PlayerActionEvent,
+    TeamActionEvent,
+    WorldActionEvent,
+    ChatEvent,
+    TeamAllianceEvent,
+    RoundEndTeamEvent,
+    PrivateChatEvent,
+    RoundEndPlayerEvent,
+    WeaponSelectEvent,
+    WeaponPickupEvent,
+]

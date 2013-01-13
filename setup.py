@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='pysrcds',
-      version='0.0.1',
+      version='0.0.1.alpha',
       description='Python library for interacting with Source engine dedicated'
                   ' servers',
       author='Peter Rowlands',

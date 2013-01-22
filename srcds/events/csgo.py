@@ -84,6 +84,30 @@ class ThrowEvent(PlayerEvent):
         return cls(**kwargs)
 
 
+class CsgoAssistEvent(PlayerTargetEvent):
+
+    """Player assist event"""
+
+    regex = ''.join([
+        BaseEvent.regex,
+        PlayerTargetEvent.player_regex,
+        r' assisted killing ',
+        PlayerTargetEvent.target_regex
+    ])
+
+    def __init__(self, timestamp, player_name, player_uid, player_steam_id,
+                 player_team, target_name, target_uid, target_steam_id,
+                 target_team):
+        super(CsgoAssistEvent, self).__init__(timestamp, player_name,
+                                        player_uid, player_steam_id,
+                                        player_team, target_name, target_uid,
+                                        target_steam_id, target_team)
+
+    def __str__(self):
+        msg = '"%s" assisted killing "%s" ' % (self.player, self.target)
+        return ' '.join([super(CsgoAssistEvent, self).__str__(), msg])
+
+
 class CsgoKillEvent(KillEvent):
 
     """CS:GO specific kill event"""
@@ -224,3 +248,13 @@ class CsgoAttackEvent(AttackEvent):
                                      int(target_location[1]),
                                      int(target_location[2]))
         return cls(**kwargs)
+
+
+CSGO_EVENTS = [
+    SwitchTeamEvent,
+    BuyEvent,
+    ThrowEvent,
+    CsgoAssistEvent,
+    CsgoKillEvent,
+    CsgoAttackEvent,
+]

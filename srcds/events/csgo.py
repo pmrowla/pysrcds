@@ -16,6 +16,7 @@ class SwitchTeamEvent(PlayerEvent):
     """Player switched team event"""
 
     regex = ''.join([
+        BaseEvent.regex,
         r'"(?P<player_name>.*)<(?P<uid>\d*)><(?P<steam_id>[\w:]*)>" ',
         r'switched from team <(?P<orig_team>\w*)> to <(?P<new_team>\w*)>',
     ])

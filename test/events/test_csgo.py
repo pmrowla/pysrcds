@@ -7,6 +7,15 @@ from srcds.events import csgo
 from .test_generic import check_event
 
 
+def test_switch_team_event():
+    """Test SwitchTeamEvent"""
+    log_line = ''.join([
+        'L 01/21/2013 - 23:07:24: "Charmander<19><STEAM_1:1:11218680>" ',
+        'switched from team <Unassigned> to <CT>',
+    ])
+    check_event(csgo.SwitchTeamEvent, log_line)
+
+
 def test_buy_event():
     """Test BuyEvent"""
     log_line = ''.join([

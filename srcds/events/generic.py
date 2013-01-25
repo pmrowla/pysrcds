@@ -19,7 +19,7 @@ class BaseEvent(object):
     """Base source event class"""
 
     regex = ''.join([
-        r'^L (?P<timestamp>(0[0-9]|1[0-2])/([0-1][0-9]|3[0-1])/\d{4} - ',
+        r'^L (?P<timestamp>(0[0-9]|1[0-2])/([0-2][0-9]|3[0-1])/\d{4} - ',
         r'([0-1][0-9]|2[0-3])(:[0-5][0-9]|60){2}):\s*',
     ])
 
@@ -131,8 +131,7 @@ class ChangeMapEvent(BaseEvent):
 
     regex = ''.join([
         BaseEvent.regex,
-        r'Log file (closed|started \(file "(?P<filename>\w*)"\) ',
-        r'\(game "(?P<game>\w*)"\) \(version "(?P<version>.*)"\))',
+        r'(Loading|Started) map "(?P<mapname>.*)"( \(CRC "(?P<crc>-?\d+)"\))?',
     ])
 
     def __init__(self, timestamp, mapname, loading=False, started=False,
@@ -151,6 +150,16 @@ class ChangeMapEvent(BaseEvent):
         else:
             msg = 'Started map "%s" (CRC "%s")' % (self.mapname, self.crc)
         return ' '.join([super(ChangeMapEvent, self).__str__(), msg])
+
+    @classmethod
+    def from_re_match(cls, match):
+        """Return an event constructed from a self.regex match"""
+        kwargs = match.groupdict()
+        if match.string.startswith('Loading'):
+            kwargs['loading'] = True
+        else:
+            kwargs['started'] = True
+        return cls(**kwargs)
 
 
 class RconEvent(BaseEvent):

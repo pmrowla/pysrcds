@@ -131,7 +131,7 @@ class ChangeMapEvent(BaseEvent):
 
     regex = ''.join([
         BaseEvent.regex,
-        r'(Loading|Started) map "(?P<mapname>.*)"( \(CRC "(?P<crc>-?\d+)"\))?',
+        r'(Loading|Started) map "(?P<mapname>.*?)"( \(CRC "(?P<crc>-?\d+)"\))?',
     ])
 
     def __init__(self, timestamp, mapname, loading=False, started=False,
@@ -505,7 +505,7 @@ class TeamActionEvent(BaseEvent):
 
     regex = ''.join([
         BaseEvent.regex,
-        r'Team "(?P<team>\w*)" triggered "(?P<action>.*)"',
+        r'Team "(?P<team>\w*?)" triggered "(?P<action>.*?)"',
     ])
 
     def __init__(self, timestamp, team, action):
@@ -524,7 +524,7 @@ class WorldActionEvent(BaseEvent):
 
     regex = ''.join([
         BaseEvent.regex,
-        r'World triggered "(?P<action>.*)"',
+        r'World triggered "(?P<action>.*?)"',
     ])
 
     def __init__(self, timestamp, action):
@@ -542,7 +542,7 @@ class ChatEvent(PlayerEvent):
 
     regex = ''.join([
         PlayerEvent.regex,
-        r'say(_team)? "(?P<message>.*)"',
+        r'say(_team)? "(?P<message>.*?)"',
     ])
 
     def __init__(self, timestamp, player_name, uid, steam_id, team,
@@ -574,7 +574,7 @@ class TeamAllianceEvent(BaseEvent):
 
     regex = ''.join([
         BaseEvent.regex,
-        r'Team "(?P<team_a>\w*)" formed alliance with "(?P<team_b>\w*)"',
+        r'Team "(?P<team_a>\w*?)" formed alliance with "(?P<team_b>\w*?)"',
     ])
 
     def __init__(self, timestamp, team_a, team_b):
@@ -594,7 +594,7 @@ class RoundEndTeamEvent(BaseEvent):
 
     regex = ''.join([
         BaseEvent.regex,
-        r'Team "(?P<team>\w*)" scored "(?P<score>\d+)" with ',
+        r'Team "(?P<team>\w*?)" scored "(?P<score>\d+)" with ',
         r'"(?P<num_players>\d+)" players',
     ])
 

@@ -98,17 +98,17 @@ class SteamId(object):
     @classmethod
     def id64_to_str(cls, id64, universe=STEAM_ACCOUNT_UNIVERSE['public']):
         """Convert a SteamID64 to a STEAM_X:Y:Z string"""
-        (z_part, y_part, instance, id_type, x_part) = SteamId.split_id64(id64)
-        return 'STEAM_%d:%d:%d' % (x_part, y_part, z_part)
+        (id_number, y_part, instance, id_type, universe) = SteamId.split_id64(id64)
+        return 'STEAM_%d:%d:%d' % (universe, y_part, id_number)
 
     @classmethod
     def split_id64(cls, id64):
         """Return a tuple of (id, y_part, instance, type, universe)"""
         y_part = id64 % 2
         id_number = (id64 & 0xffffffff - y_part) // 2
-        instance = id64 & 0x000fffff00000000
-        id_type = id64 & 0x00f0000000000000
-        universe = id64 & 0xff00000000000000
+        instance = (id64 & 0x000fffff00000000) >> 32
+        id_type = (id64 & 0x00f0000000000000) >> 52
+        universe = (id64 & 0xff00000000000000) >> 56
         return (id_number, y_part, instance, id_type, universe)
 
 
@@ -116,22 +116,31 @@ class BasePlayer(object):
 
     """Source player object"""
 
-    def __init__(self, name, uid, steam_id, team=''):
+    def __init__(self, name, uid, steam_id, team=u''):
         if not isinstance(steam_id, SteamId):
             raise TypeError('Expected type SteamId for steam_id')
+        if not isinstance(name, unicode):
+            name = unicode(name, 'utf-8')
         self.name = name
         if isinstance(uid, str):
             uid = int(uid)
         self.uid = uid
         self.steam_id = steam_id
+        if team is None:
+            team = u''
+        if not isinstance(team, unicode):
+            team = unicode(team, 'utf-8')
         self.team = team
 
     def __str__(self):
+        return unicode(self).encode('ascii', 'replace')
+
+    def __unicode__(self):
         msg = [
             self.name,
-            '<%d>' % self.uid,
-            '<%s>' % self.steam_id,
+            u'<%d>' % self.uid,
+            u'<%s>' % self.steam_id,
         ]
         if self.team is not None:
-            msg.append('<%s>' % self.team)
-        return ''.join(msg)
+            msg.append(u'<%s>' % self.team)
+        return u''.join(msg)

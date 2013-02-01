@@ -22,7 +22,7 @@ setup(name='pysrcds',
           'Topic :: Games/Entertainment :: First Person Shooters',
           'Topic :: Software Development :: Libraries :: Python Modules',
      ]
-     long_description= \
+     long_description=\
 '''
 =======
 pysrcds

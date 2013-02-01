@@ -14,5 +14,5 @@ License
 -------
 
 pysrcds is distributed under the MIT license. See
-[LICENSE.md](https://github.pmrowla.com/pysrcds/blob/master/LICENSE.md)
+[LICENSE.md](https://github.com/pmrowla/pysrcds/blob/master/LICENSE.md)
 for more information.

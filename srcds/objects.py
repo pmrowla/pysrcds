@@ -123,7 +123,7 @@ class BasePlayer(object):
         if not isinstance(steam_id, SteamId):
             raise TypeError('Expected type SteamId for steam_id')
         if isinstance(name, str):
-            name = unicode(name, 'utf-8')
+            name = unicode(name, 'utf-8', 'replace')
         self.name = name
         if isinstance(uid, str) or isinstance(uid, unicode):
             uid = int(uid)

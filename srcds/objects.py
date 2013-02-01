@@ -122,6 +122,8 @@ class BasePlayer(object):
     def __init__(self, name, uid, steam_id, team=u''):
         if not isinstance(steam_id, SteamId):
             raise TypeError('Expected type SteamId for steam_id')
+        if isinstance(name, str):
+            name = unicode(name, 'utf-8')
         self.name = name
         if isinstance(uid, str) or isinstance(uid, unicode):
             uid = int(uid)

@@ -59,5 +59,5 @@ class SourceLogParser(object):
         """Write the events back to a file object"""
         lines = []
         for event in self.events:
-            lines.append(unicode(self.event, 'utf-8'))
+            lines.append(unicode(self.event))
         fileobject.write(os.linesep.join(lines))

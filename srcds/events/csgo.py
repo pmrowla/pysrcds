@@ -17,8 +17,8 @@ class SwitchTeamEvent(PlayerEvent):
 
     regex = ''.join([
         BaseEvent.regex,
-        r'"(?P<player_name>.*)<(?P<uid>\d*)><(?P<steam_id>[\w:]*)>" ',
-        r'switched from team <(?P<orig_team>\w*)> to <(?P<new_team>\w*)>',
+        ur'"(?P<player_name>.*)<(?P<uid>\d*)><(?P<steam_id>[\w:]*)>" ',
+        ur'switched from team <(?P<orig_team>\w*)> to <(?P<new_team>\w*)>',
     ])
 
     def __init__(self, timestamp, player_name, uid, steam_id, orig_team,
@@ -28,9 +28,15 @@ class SwitchTeamEvent(PlayerEvent):
         self.orig_team = orig_team
         self.new_team = new_team
 
-    def __str__(self):
-        msg = 'switched from team <%s> to <%s>' % (self.orig_team, self.new_team)
-        return ' '.join([super(SwitchTeamEvent, self).__str__(), msg])
+    def __unicode__(self):
+        player = self.player
+        player.team = None
+        msg = u' '.join([
+            u'"%s"' % player,
+            u'switched from team <%s> to <%s>' % (self.orig_team,
+                                                  self.new_team),
+        ])
+        return u' '.join([super(PlayerEvent, self).__unicode__(), msg])
 
 
 class BuyEvent(PlayerEvent):
@@ -39,7 +45,7 @@ class BuyEvent(PlayerEvent):
 
     regex = ''.join([
         PlayerEvent.regex,
-        r'purchased "(?P<item>\w*)"',
+        ur'purchased "(?P<item>\w*)"',
     ])
 
     def __init__(self, timestamp, player_name, uid, steam_id, team, item):
@@ -47,9 +53,9 @@ class BuyEvent(PlayerEvent):
                                        team)
         self.item = item
 
-    def __str__(self):
-        msg = 'purchased "%s"' % (self.item)
-        return ' '.join([super(BuyEvent, self).__str__(), msg])
+    def __unicode__(self):
+        msg = u'purchased "%s"' % (self.item)
+        return u' '.join([super(BuyEvent, self).__unicode__(), msg])
 
 
 class ThrowEvent(PlayerEvent):
@@ -58,7 +64,7 @@ class ThrowEvent(PlayerEvent):
 
     regex = ''.join([
         PlayerEvent.regex,
-        r'threw (?P<nade>\w*) \[(?P<location>-?\d+ -?\d+ -?\d+)\]',
+        ur'threw (?P<nade>\w*) \[(?P<location>-?\d+ -?\d+ -?\d+)\]',
     ])
 
     def __init__(self, timestamp, player_name, uid, steam_id, team, nade,
@@ -70,10 +76,10 @@ class ThrowEvent(PlayerEvent):
         self.location = location
         self.nade = nade
 
-    def __str__(self):
-        msg = 'threw %s [%d %d %d]' % (self.nade, self.location[0],
+    def __unicode__(self):
+        msg = u'threw %s [%d %d %d]' % (self.nade, self.location[0],
                                        self.location[1], self.location[2])
-        return ' '.join([super(ThrowEvent, self).__str__(), msg])
+        return u' '.join([super(ThrowEvent, self).__unicode__(), msg])
 
     @classmethod
     def from_re_match(cls, match):
@@ -92,7 +98,7 @@ class CsgoAssistEvent(PlayerTargetEvent):
     regex = ''.join([
         BaseEvent.regex,
         PlayerTargetEvent.player_regex,
-        r' assisted killing ',
+        ur' assisted killing ',
         PlayerTargetEvent.target_regex
     ])
 
@@ -104,9 +110,9 @@ class CsgoAssistEvent(PlayerTargetEvent):
                                         player_team, target_name, target_uid,
                                         target_steam_id, target_team)
 
-    def __str__(self):
-        msg = '"%s" assisted killing "%s" ' % (self.player, self.target)
-        return ' '.join([super(CsgoAssistEvent, self).__str__(), msg])
+    def __unicode__(self):
+        msg = u'"%s" assisted killing "%s" ' % (self.player, self.target)
+        return u' '.join([super(CsgoAssistEvent, self).__unicode__(), msg])
 
 
 class CsgoKillEvent(KillEvent):
@@ -116,12 +122,12 @@ class CsgoKillEvent(KillEvent):
     regex = ''.join([
         BaseEvent.regex,
         PlayerTargetEvent.player_regex,
-        r'\[(?P<player_location>-?\d+ -?\d+ -?\d+)\]',
-        r' killed ',
+        ur'\[(?P<player_location>-?\d+ -?\d+ -?\d+)\]',
+        ur' killed ',
         PlayerTargetEvent.target_regex,
-        r'\[(?P<target_location>-?\d+ -?\d+ -?\d+)\]',
-        r' with "(?P<weapon>\w*)"',
-        r'( \(headshot\))?',
+        ur'\[(?P<target_location>-?\d+ -?\d+ -?\d+)\]',
+        ur' with "(?P<weapon>\w*)"',
+        ur'( \(headshot\))?',
     ])
 
     def __init__(self, timestamp, player_name, player_uid, player_steam_id,
@@ -143,21 +149,21 @@ class CsgoKillEvent(KillEvent):
         self.target_location = target_location
         self.headshot = headshot
 
-    def __str__(self):
+    def __unicode__(self):
         msg = [
-            'L %s:' % (self.timestamp_to_str(self.timestamp)),
-            '"%s" [%d %d %d]' % (self.player, self.player_location[0],
+            u'L %s:' % (self.timestamp_to_str(self.timestamp)),
+            u'"%s" [%d %d %d]' % (self.player, self.player_location[0],
                                  self.player_location[1],
                                  self.player_location[2]),
-            'killed',
-            '"%s" [%d %d %d]' % (self.target, self.target_location[0],
+            u'killed',
+            u'"%s" [%d %d %d]' % (self.target, self.target_location[0],
                                  self.target_location[1],
                                  self.target_location[2]),
-            'with "%s"' % (self.weapon),
+            u'with "%s"' % (self.weapon),
         ]
         if self.headshot:
-            msg.append('(headshot)')
-        return ' '.join(msg)
+            msg.append(u'(headshot)')
+        return u' '.join(msg)
 
     @classmethod
     def from_re_match(cls, match):
@@ -183,16 +189,16 @@ class CsgoAttackEvent(AttackEvent):
     regex = ''.join([
         BaseEvent.regex,
         PlayerTargetEvent.player_regex,
-        r'\[(?P<player_location>-?\d+ -?\d+ -?\d+)\]',
-        r' attacked ',
+        ur'\[(?P<player_location>-?\d+ -?\d+ -?\d+)\]',
+        ur' attacked ',
         PlayerTargetEvent.target_regex,
-        r'\[(?P<target_location>-?\d+ -?\d+ -?\d+)\]',
-        r' with "(?P<weapon>\w*)"',
-        r' \(damage "(?P<damage>\d+)"\)',
-        r' \(damage_armor "(?P<damage_armor>\d+)"\)',
-        r' \(health "(?P<health>\d+)"\)',
-        r' \(armor "(?P<armor>\d+)"\)',
-        r' \(hitgroup "(?P<hitgroup>[\w ]+)"\)',
+        ur'\[(?P<target_location>-?\d+ -?\d+ -?\d+)\]',
+        ur' with "(?P<weapon>\w*)"',
+        ur' \(damage "(?P<damage>\d+)"\)',
+        ur' \(damage_armor "(?P<damage_armor>\d+)"\)',
+        ur' \(health "(?P<health>\d+)"\)',
+        ur' \(armor "(?P<armor>\d+)"\)',
+        ur' \(hitgroup "(?P<hitgroup>[\w ]+)"\)',
     ])
 
     def __init__(self, timestamp, player_name, player_uid, player_steam_id,
@@ -217,24 +223,24 @@ class CsgoAttackEvent(AttackEvent):
         self.armor = int(armor)
         self.hitgroup = hitgroup
 
-    def __str__(self):
+    def __unicode__(self):
         msg = [
-            'L %s:' % (self.timestamp_to_str(self.timestamp)),
-            '"%s" [%d %d %d]' % (self.player, self.player_location[0],
+            u'L %s:' % (self.timestamp_to_str(self.timestamp)),
+            u'"%s" [%d %d %d]' % (self.player, self.player_location[0],
                                  self.player_location[1],
                                  self.player_location[2]),
-            'attacked',
-            '"%s" [%d %d %d]' % (self.target, self.target_location[0],
+            u'attacked',
+            u'"%s" [%d %d %d]' % (self.target, self.target_location[0],
                                  self.target_location[1],
                                  self.target_location[2]),
-            'with "%s"' % (self.weapon),
-            '(damage "%d")' % (self.damage),
-            '(damage_armor "%d")' % (self.damage_armor),
-            '(health "%d")' % (self.health),
-            '(armor "%d")' % (self.armor),
-            '(hitgroup "%s")' % (self.hitgroup),
+            u'with "%s"' % (self.weapon),
+            u'(damage "%d")' % (self.damage),
+            u'(damage_armor "%d")' % (self.damage_armor),
+            u'(health "%d")' % (self.health),
+            u'(armor "%d")' % (self.armor),
+            u'(hitgroup "%s")' % (self.hitgroup),
         ]
-        return ' '.join(msg)
+        return u' '.join(msg)
 
     @classmethod
     def from_re_match(cls, match):

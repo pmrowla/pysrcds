@@ -24,14 +24,14 @@ STEAM_ACCOUNT_TYPE = {
     'invalid': 0,
     'individual': 1,
     'multiseat': 2,
-    'gameserver': 3,
-    'anongameserver': 4,
+    'gameserveur': 3,
+    'anongameserveur': 4,
     'pending': 5,
-    'contentserver': 6,
+    'contentserveur': 6,
     'clan': 7,
     'chat': 8,
-    'p2p_superseeder': 9,
-    'anonuser': 10,
+    'p2p_superseedeur': 9,
+    'anonuseur': 10,
 }
 
 
@@ -55,19 +55,19 @@ class SteamId(object):
              self.instance,
              self.id_type,
              self.universe) = self.split_id64(steam_id)
-        elif not isinstance(steam_id, str):
+        elif not isinstance(steam_id, str) and not isinstance(steam_id, unicode):
             raise TypeError('Invalid type for steam_id')
         else:
-            if steam_id == 'BOT':
+            if unicode(steam_id) == u'BOT':
                 self.is_bot = True
-            elif steam_id == 'Console':
+            elif unicode(steam_id) == u'Console':
                 self.is_console == True
             else:
                 pattern = ''.join([
-                    r'STEAM_(?P<universe>[0-5]):(?P<y_part>\d+):',
-                    r'(?P<id_number>\d+)',
+                    ur'STEAM_(?P<universe>[0-5]):(?P<y_part>\d+):',
+                    ur'(?P<id_number>\d+)',
                 ])
-                match = re.match(pattern, steam_id, re.I)
+                match = re.match(pattern, steam_id, re.I | re.U)
                 if not match:
                     raise ValueError('Invalid string steam_id: %s' % steam_id)
                 self.universe = int(match.groupdict()['universe'])
@@ -77,10 +77,13 @@ class SteamId(object):
                 self.id_type = id_type
 
     def __str__(self):
+        return unicode(self).encode('utf-8')
+
+    def __unicode__(self):
         if self.is_bot:
-            return 'BOT'
+            return u'BOT'
         elif self.is_console:
-            return 'Console'
+            return u'Console'
         else:
             return self.id64_to_str(self.id64())
 
@@ -99,7 +102,7 @@ class SteamId(object):
     def id64_to_str(cls, id64, universe=STEAM_ACCOUNT_UNIVERSE['public']):
         """Convert a SteamID64 to a STEAM_X:Y:Z string"""
         (id_number, y_part, instance, id_type, universe) = SteamId.split_id64(id64)
-        return 'STEAM_%d:%d:%d' % (universe, y_part, id_number)
+        return u'STEAM_%d:%d:%d' % (universe, y_part, id_number)
 
     @classmethod
     def split_id64(cls, id64):
@@ -119,21 +122,19 @@ class BasePlayer(object):
     def __init__(self, name, uid, steam_id, team=u''):
         if not isinstance(steam_id, SteamId):
             raise TypeError('Expected type SteamId for steam_id')
-        if not isinstance(name, unicode):
-            name = unicode(name, 'utf-8')
-        self.name = name
-        if isinstance(uid, str):
+        self.name = unicode(name)
+        if isinstance(uid, str) or isinstance(uid, unicode):
             uid = int(uid)
         self.uid = uid
         self.steam_id = steam_id
         if team is None:
             team = u''
         if not isinstance(team, unicode):
-            team = unicode(team, 'utf-8')
+            team = unicode(team)
         self.team = team
 
     def __str__(self):
-        return unicode(self).encode('ascii', 'replace')
+        return unicode(self).encode('utf-8')
 
     def __unicode__(self):
         msg = [

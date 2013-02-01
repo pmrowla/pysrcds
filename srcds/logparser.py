@@ -33,7 +33,7 @@ class SourceLogParser(object):
     def add_event_types(self, event_types=[]):
         """Add event types"""
         for cls in event_types:
-            regex = re.compile(cls.regex)
+            regex = re.compile(cls.regex, re.U)
             self.events_types.append((regex, cls))
 
     def parse_line(self, line):
@@ -59,5 +59,5 @@ class SourceLogParser(object):
         """Write the events back to a file object"""
         lines = []
         for event in self.events:
-            lines.append(str(self.events))
+            lines.append(unicode(self.events))
         fileobject.write(os.linesep.join(lines))

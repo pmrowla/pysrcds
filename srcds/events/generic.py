@@ -19,14 +19,14 @@ class BaseEvent(object):
     """Base source event class"""
 
     regex = ''.join([
-        r'^L (?P<timestamp>(0[0-9]|1[0-2])/([0-2][0-9]|3[0-1])/\d{4} - ',
-        r'([0-1][0-9]|2[0-3])(:[0-5][0-9]|60){2}):\s*',
+        ur'^L (?P<timestamp>(0[0-9]|1[0-2])/([0-2][0-9]|3[0-1])/\d{4} - ',
+        ur'([0-1][0-9]|2[0-3])(:[0-5][0-9]|60){2}):\s*',
     ])
 
     def __init__(self, timestamp):
         if isinstance(timestamp, datetime):
             self.timestamp = timestamp
-        elif isinstance(timestamp, str):
+        elif isinstance(timestamp, str) or isinstance(timestamp, unicode):
             self.timestamp = datetime.strptime(timestamp,
                                                '%m/%d/%Y - %H:%M:%S')
         else:
@@ -34,7 +34,10 @@ class BaseEvent(object):
 
     def __str__(self):
         """Return a valid HL Log Standard log entry string"""
-        return 'L %s:' % (self.timestamp_to_str(self.timestamp))
+        return unicode(self).encode('utf-8')
+
+    def __unicode__(self):
+        return u'L %s:' % (self.timestamp_to_str(self.timestamp))
 
     @classmethod
     def timestamp_to_str(cls, timestamp):
@@ -55,7 +58,7 @@ class CvarEvent(BaseEvent):
 
     regex = ''.join([
         BaseEvent.regex,
-        r'Server (cvars (start|end)|cvar "(?P<cvar>\w*)" = "(?P<value>\w*)")',
+        ur'Server (cvars (start|end)|cvar "(?P<cvar>\w*)" = "(?P<value>\w*)")',
     ])
 
     def __init__(self, timestamp, cvar='', value='', start=False, end=False):
@@ -65,14 +68,14 @@ class CvarEvent(BaseEvent):
         self.start = start
         self.end = end
 
-    def __str__(self):
+    def __unicode__(self):
         if self.start:
-            msg = 'Server cvars start'
+            msg = u'Server cvars start'
         elif self.end:
-            msg = 'Server cvars end'
+            msg = u'Server cvars end'
         else:
-            msg = 'Server cvar "%s" = "%s"' % (self.cvar, self.value)
-        return ' '.join([super(CvarEvent, self).__str__(), msg])
+            msg = u'Server cvar "%s" = "%s"' % (self.cvar, self.value)
+        return u' '.join([super(CvarEvent, self).__unicode__(), msg])
 
     @classmethod
     def from_re_match(cls, match):
@@ -91,8 +94,8 @@ class LogFileEvent(BaseEvent):
 
     regex = ''.join([
         BaseEvent.regex,
-        r'Log file (closed|started \(file "(?P<filename>.*)"\) ',
-        r'\(game "(?P<game>.*)"\) \(version "(?P<version>.*)"\))',
+        ur'Log file (closed|started \(file "(?P<filename>.*)"\) ',
+        ur'\(game "(?P<game>.*)"\) \(version "(?P<version>.*)"\))',
     ])
 
     def __init__(self, timestamp, filename='', game='', version='',
@@ -106,13 +109,13 @@ class LogFileEvent(BaseEvent):
         self.started = started
         self.closed = closed
 
-    def __str__(self):
+    def __unicode__(self):
         if self.started:
-            msg = 'Log file started (file "%s") (game "%s") (version "%s")' % (
+            msg = u'Log file started (file "%s") (game "%s") (version "%s")' % (
                 self.filename, self.game, self.version)
         else:
-            msg = 'Log file closed'
-        return ' '.join([super(LogFileEvent, self).__str__(), msg])
+            msg = u'Log file closed'
+        return u' '.join([super(LogFileEvent, self).__unicode__(), msg])
 
     @classmethod
     def from_re_match(cls, match):
@@ -131,7 +134,7 @@ class ChangeMapEvent(BaseEvent):
 
     regex = ''.join([
         BaseEvent.regex,
-        r'(Loading|Started) map "(?P<mapname>.*?)"( \(CRC "(?P<crc>-?\d+)"\))?',
+        ur'(Loading|Started) map "(?P<mapname>.*?)"( \(CRC "(?P<crc>-?\d+)"\))?',
     ])
 
     def __init__(self, timestamp, mapname, loading=False, started=False,
@@ -144,12 +147,12 @@ class ChangeMapEvent(BaseEvent):
         self.started = started
         self.crc = crc
 
-    def __str__(self):
+    def __unicode__(self):
         if self.loading:
-            msg = 'Loading map "%s"' % (self.mapname)
+            msg = u'Loading map "%s"' % (self.mapname)
         else:
-            msg = 'Started map "%s" (CRC "%s")' % (self.mapname, self.crc)
-        return ' '.join([super(ChangeMapEvent, self).__str__(), msg])
+            msg = u'Started map "%s" (CRC "%s")' % (self.mapname, self.crc)
+        return ' '.join([super(ChangeMapEvent, self).__unicode__(), msg])
 
     @classmethod
     def from_re_match(cls, match):
@@ -168,8 +171,8 @@ class RconEvent(BaseEvent):
 
     regex = ''.join([
         BaseEvent.regex,
-        r'(Bad )?Rcon: "rcon challenge "(?P<password>\w*)" from ',
-        r'"(?P<host>\w*):(?P<port>\d{0-5})"',
+        ur'(Bad )?Rcon: "rcon challenge "(?P<password>\w*)" from ',
+        ur'"(?P<host>\w*):(?P<port>\d{0-5})"',
     ])
 
     def __init__(self, timestamp, password, address, passed=False):
@@ -180,14 +183,14 @@ class RconEvent(BaseEvent):
         self.address = address
         self.passed = passed
 
-    def __str__(self):
+    def __unicode__(self):
         if self.passed:
-            msg = 'Rcon: "rcon challenge "%s" command" from "%s:%d"' % (
+            msg = u'Rcon: "rcon challenge "%s" command" from "%s:%d"' % (
                 self.password, self.address[0], self.address[1])
         else:
-            msg = 'Bad Rcon: "rcon challenge "%s" command" from "%s:%d"' % (
+            msg = u'Bad Rcon: "rcon challenge "%s" command" from "%s:%d"' % (
                 self.password, self.address[0], self.address[1])
-        return ' '.join([super(RconEvent, self).__str__(), msg])
+        return ' '.join([super(RconEvent, self).__unicode__(), msg])
 
     @classmethod
     def from_re_match(cls, match):
@@ -204,17 +207,17 @@ class PlayerEvent(BaseEvent):
 
     regex = ''.join([
         BaseEvent.regex,
-        r'"(?P<player_name>.*)<(?P<uid>\d*)><(?P<steam_id>[\w:]*)>',
-        r'<(?P<team>\w*)>"\s*',
+        ur'"(?P<player_name>.*)<(?P<uid>\d*)><(?P<steam_id>[\w:]*)>',
+        ur'<(?P<team>\w*)>"\s*',
     ])
 
     def __init__(self, timestamp, player_name, uid, steam_id, team=''):
         super(PlayerEvent, self).__init__(timestamp)
         self.player = BasePlayer(player_name, uid, SteamId(steam_id), team)
 
-    def __str__(self):
-        msg = '"%s"' % self.player
-        return ' '.join([super(PlayerEvent, self).__str__(), msg])
+    def __unicode__(self):
+        msg = u'"%s"' % self.player
+        return u' '.join([super(PlayerEvent, self).__unicode__(), msg])
 
 
 class ConnectionEvent(PlayerEvent):
@@ -223,7 +226,7 @@ class ConnectionEvent(PlayerEvent):
 
     regex = ''.join([
         PlayerEvent.regex,
-        r'connected, address "((?P<address>none)|(?P<host>\d+(\.\d+){3}):(?P<port>\d*))"'
+        ur'connected, address "((?P<address>none)|(?P<host>\d+(\.\d+){3}):(?P<port>\d*))"'
     ])
 
     def __init__(self, timestamp, player_name, uid, steam_id, team, address):
@@ -235,13 +238,13 @@ class ConnectionEvent(PlayerEvent):
         super(ConnectionEvent, self).__init__(timestamp, player_name, uid,
                                               steam_id, team)
 
-    def __str__(self):
-        if isinstance(self.address, str):
-            msg = 'connected, address "%s"' % (self.address)
-        else:
-            msg = 'connected, address "%s:%d"' % (self.address[0],
+    def __unicode__(self):
+        if isinstance(self.address, tuple):
+            msg = u'connected, address "%s:%d"' % (self.address[0],
                                                   self.address[1])
-        return ' '.join([super(ConnectionEvent, self).__str__(), msg])
+        else:
+            msg = u'connected, address "%s"' % (self.address)
+        return u' '.join([super(ConnectionEvent, self).__unicode__(), msg])
 
     @classmethod
     def from_re_match(cls, match):
@@ -260,12 +263,12 @@ class ValidationEvent(PlayerEvent):
 
     regex = ''.join([
         PlayerEvent.regex,
-        'STEAM USERID validated',
+        ur'STEAM USERID validated',
     ])
 
-    def __str__(self):
-        msg = 'STEAM USERID validated'
-        return ' '.join([super(ValidationEvent, self).__str__(), msg])
+    def __unicode__(self):
+        msg = u'STEAM USERID validated'
+        return u' '.join([super(ValidationEvent, self).__unicode__(), msg])
 
 
 class EnterGameEvent(PlayerEvent):
@@ -274,12 +277,12 @@ class EnterGameEvent(PlayerEvent):
 
     regex = ''.join([
         PlayerEvent.regex,
-        r'entered the game',
+        ur'entered the game',
     ])
 
-    def __str__(self):
-        msg = 'entered the game'
-        return ' '.join([super(EnterGameEvent, self).__str__(), msg])
+    def __unicode__(self):
+        msg = u'entered the game'
+        return u' '.join([super(EnterGameEvent, self).__unicode__(), msg])
 
 
 class DisconnectionEvent(PlayerEvent):
@@ -288,12 +291,12 @@ class DisconnectionEvent(PlayerEvent):
 
     regex = ''.join([
         PlayerEvent.regex,
-        r'disconnected',
+        ur'disconnected',
     ])
 
-    def __str__(self):
-        msg = 'disconnected'
-        return ' '.join([super(DisconnectionEvent, self).__str__(), msg])
+    def __unicode__(self):
+        msg = u'disconnected'
+        return u' '.join([super(DisconnectionEvent, self).__unicode__(), msg])
 
 
 class KickEvent(PlayerEvent):
@@ -302,9 +305,9 @@ class KickEvent(PlayerEvent):
 
     regex = ''.join([
         BaseEvent.regex,
-        r'Kick: "(?P<player_name>.*)<(?P<uid>\d*)><(?P<steam_id>[\w:]*)>',
-        r'<(?P<team>\w*)>" was kicked by "Console" ',
-        r'\(message "(?P<message>.*)"\)',
+        ur'Kick: "(?P<player_name>.*)<(?P<uid>\d*)><(?P<steam_id>[\w:]*)>',
+        ur'<(?P<team>\w*)>" was kicked by "Console" ',
+        ur'\(message "(?P<message>.*)"\)',
     ])
 
     def __init__(self, timestamp, player_name, uid, steam_id, team, message):
@@ -312,11 +315,11 @@ class KickEvent(PlayerEvent):
                                         steam_id, team)
         self.message = message
 
-    def __str__(self):
+    def __unicode__(self):
         return ' '.join([
-            'L %s:' % (self.timestamp_to_str(self.timestamp)),
-            'Kick: "%s"' % (self.player),
-            'was kicked by "Console" (message "%s")' % (self.message),
+            u'L %s:' % (self.timestamp_to_str(self.timestamp)),
+            u'Kick: "%s"' % (self.player),
+            u'was kicked by "Console" (message "%s")' % (self.message),
         ])
 
 
@@ -326,7 +329,7 @@ class SuicideEvent(PlayerEvent):
 
     regex = ''.join([
         PlayerEvent.regex,
-        r'committed suicide with "(?P<weapon>\w*)"',
+        ur'committed suicide with "(?P<weapon>\w*)"',
     ])
 
     def __init__(self, timestamp, player_name, uid, steam_id, team, weapon):
@@ -334,9 +337,9 @@ class SuicideEvent(PlayerEvent):
                                            steam_id, team)
         self.weapon = weapon
 
-    def __str__(self):
-        msg = 'committed suicide with "%s"' % (self.weapon)
-        return ' '.join([super(SuicideEvent, self).__str__(), msg])
+    def __unicode__(self):
+        msg = u'committed suicide with "%s"' % (self.weapon)
+        return u' '.join([super(SuicideEvent, self).__unicode__(), msg])
 
 
 class TeamSelectionEvent(PlayerEvent):
@@ -345,7 +348,7 @@ class TeamSelectionEvent(PlayerEvent):
 
     regex = ''.join([
         PlayerEvent.regex,
-        r'joined team "(?P<new_team>\w*)"',
+        ur'joined team "(?P<new_team>\w*)"',
     ])
 
     def __init__(self, timestamp, player_name, uid, steam_id, team,
@@ -354,9 +357,9 @@ class TeamSelectionEvent(PlayerEvent):
                                                  steam_id, team)
         self.new_team = new_team
 
-    def __str__(self):
-        msg = 'joined team "%s"' % (self.new_team)
-        return ' '.join([super(TeamSelectionEvent, self).__str__(), msg])
+    def __unicode__(self):
+        msg = u'joined team "%s"' % (self.new_team)
+        return u' '.join([super(TeamSelectionEvent, self).__unicode__(), msg])
 
 
 class RoleSelectionEvent(PlayerEvent):
@@ -365,7 +368,7 @@ class RoleSelectionEvent(PlayerEvent):
 
     regex = ''.join([
         PlayerEvent.regex,
-        r'changed role to "(?P<role>\w*)"',
+        ur'changed role to "(?P<role>\w*)"',
     ])
 
     def __init__(self, timestamp, player_name, uid, steam_id, team,
@@ -374,9 +377,9 @@ class RoleSelectionEvent(PlayerEvent):
                                                  steam_id, team)
         self.role = role
 
-    def __str__(self):
-        msg = 'changed role to "%s"' % (self.role)
-        return ' '.join([super(RoleSelectionEvent, self).__str__(), msg])
+    def __unicode__(self):
+        msg = u'changed role to "%s"' % (self.role)
+        return u' '.join([super(RoleSelectionEvent, self).__unicode__(), msg])
 
 
 class ChangeNameEvent(PlayerEvent):
@@ -385,7 +388,7 @@ class ChangeNameEvent(PlayerEvent):
 
     regex = ''.join([
         PlayerEvent.regex,
-        r'changed name to "(?P<new_name>.*)"',
+        ur'changed name to "(?P<new_name>.*)"',
     ])
 
     def __init__(self, timestamp, player_name, uid, steam_id, team,
@@ -394,9 +397,9 @@ class ChangeNameEvent(PlayerEvent):
                                               steam_id, team)
         self.new_name = new_name
 
-    def __str__(self):
-        msg = 'changed name to "%s"' % (self.new_name)
-        return ' '.join([super(ChangeNameEvent, self).__str__(), msg])
+    def __unicode__(self):
+        msg = u'changed name to "%s"' % (self.new_name)
+        return u' '.join([super(ChangeNameEvent, self).__unicode__(), msg])
 
 
 class PlayerTargetEvent(BaseEvent):
@@ -404,12 +407,12 @@ class PlayerTargetEvent(BaseEvent):
     """Base class for events involving two players"""
 
     player_regex = ''.join([
-        r'"(?P<player_name>.*)<(?P<player_uid>\d*)>',
-        r'<(?P<player_steam_id>[\w:]*)><(?P<player_team>\w*)>"\s*',
+        ur'"(?P<player_name>.*)<(?P<player_uid>\d*)>',
+        ur'<(?P<player_steam_id>[\w:]*)><(?P<player_team>\w*)>"\s*',
     ])
     target_regex = ''.join([
-        r'"(?P<target_name>.*)<(?P<target_uid>\d*)>',
-        r'<(?P<target_steam_id>[\w:]*)><(?P<target_team>\w*)>"\s*',
+        ur'"(?P<target_name>.*)<(?P<target_uid>\d*)>',
+        ur'<(?P<target_steam_id>[\w:]*)><(?P<target_team>\w*)>"\s*',
     ])
 
     def __init__(self, timestamp, player_name, player_uid, player_steam_id,
@@ -429,9 +432,9 @@ class KillEvent(PlayerTargetEvent):
     regex = ''.join([
         BaseEvent.regex,
         PlayerTargetEvent.player_regex,
-        r' killed ',
+        ur' killed ',
         PlayerTargetEvent.target_regex,
-        r' with "(?P<weapon>\w*)"',
+        ur' with "(?P<weapon>\w*)"',
     ])
 
     def __init__(self, timestamp, player_name, player_uid, player_steam_id,
@@ -443,10 +446,10 @@ class KillEvent(PlayerTargetEvent):
                                         target_steam_id, target_team)
         self.weapon = weapon
 
-    def __str__(self):
-        msg = '"%s" killed "%s" with "%s"' % (self.player, self.target,
+    def __unicode__(self):
+        msg = u'"%s" killed "%s" with "%s"' % (self.player, self.target,
                                               self.weapon)
-        return ' '.join([super(KillEvent, self).__str__(), msg])
+        return u' '.join([super(KillEvent, self).__unicode__(), msg])
 
 
 class AttackEvent(PlayerTargetEvent):
@@ -456,9 +459,9 @@ class AttackEvent(PlayerTargetEvent):
     regex = ''.join([
         BaseEvent.regex,
         PlayerTargetEvent.player_regex,
-        r' attacked ',
+        ur' attacked ',
         PlayerTargetEvent.target_regex,
-        r' with "(?P<weapon>\w*)" \(damage "(?P<damage>\d*)"\)',
+        ur' with "(?P<weapon>\w*)" \(damage "(?P<damage>\d*)"\)',
     ])
 
     def __init__(self, timestamp, player_name, player_uid, player_steam_id,
@@ -471,12 +474,12 @@ class AttackEvent(PlayerTargetEvent):
         self.weapon = weapon
         self.damage = int(damage)
 
-    def __str__(self):
-        msg = '"%s" attacked "%s" with "%s" (damage "%d")' % (self.player,
-                                                              self.target,
-                                                              self.weapon,
-                                                              self.damage)
-        return ' '.join([super(AttackEvent, self).__str__(), msg])
+    def __unicode__(self):
+        msg = u'"%s" attacked "%s" with "%s" (damage "%d")' % (self.player,
+                                                               self.target,
+                                                               self.weapon,
+                                                               self.damage)
+        return u' '.join([super(AttackEvent, self).__unicode__(), msg])
 
 
 class PlayerActionEvent(PlayerEvent):
@@ -485,7 +488,7 @@ class PlayerActionEvent(PlayerEvent):
 
     regex = ''.join([
         PlayerEvent.regex,
-        r'triggered "(?P<action>.*)"',
+        ur'triggered "(?P<action>.*)"',
     ])
 
     def __init__(self, timestamp, player_name, uid, steam_id, team,
@@ -494,9 +497,9 @@ class PlayerActionEvent(PlayerEvent):
                                                 steam_id, team)
         self.action = action
 
-    def __str__(self):
-        msg = 'triggered "%s"' % (self.action)
-        return ' '.join([super(PlayerActionEvent, self).__str__(), msg])
+    def __unicode__(self):
+        msg = u'triggered "%s"' % (self.action)
+        return u' '.join([super(PlayerActionEvent, self).__unicode__(), msg])
 
 
 class TeamActionEvent(BaseEvent):
@@ -505,7 +508,7 @@ class TeamActionEvent(BaseEvent):
 
     regex = ''.join([
         BaseEvent.regex,
-        r'Team "(?P<team>\w*?)" triggered "(?P<action>.*?)"',
+        ur'Team "(?P<team>\w*?)" triggered "(?P<action>.*?)"',
     ])
 
     def __init__(self, timestamp, team, action):
@@ -513,9 +516,9 @@ class TeamActionEvent(BaseEvent):
         self.team = team
         self.action = action
 
-    def __str__(self):
-        msg = 'Team "%s" triggered "%s"' % (self.team, self.action)
-        return ' '.join([super(TeamActionEvent, self).__str__(), msg])
+    def __unicode__(self):
+        msg = u'Team "%s" triggered "%s"' % (self.team, self.action)
+        return u' '.join([super(TeamActionEvent, self).__unicode__(), msg])
 
 
 class WorldActionEvent(BaseEvent):
@@ -524,16 +527,16 @@ class WorldActionEvent(BaseEvent):
 
     regex = ''.join([
         BaseEvent.regex,
-        r'World triggered "(?P<action>.*?)"',
+        ur'World triggered "(?P<action>.*?)"',
     ])
 
     def __init__(self, timestamp, action):
         super(WorldActionEvent, self).__init__(timestamp)
         self.action = action
 
-    def __str__(self):
-        msg = 'World triggered "%s"' % (self.action)
-        return ' '.join([super(WorldActionEvent, self).__str__(), msg])
+    def __unicode__(self):
+        msg = u'World triggered "%s"' % (self.action)
+        return u' '.join([super(WorldActionEvent, self).__unicode__(), msg])
 
 
 class ChatEvent(PlayerEvent):
@@ -542,7 +545,7 @@ class ChatEvent(PlayerEvent):
 
     regex = ''.join([
         PlayerEvent.regex,
-        r'say(_team)? "(?P<message>.*?)"',
+        ur'say(_team)? "(?P<message>.*?)"',
     ])
 
     def __init__(self, timestamp, player_name, uid, steam_id, team,
@@ -552,12 +555,12 @@ class ChatEvent(PlayerEvent):
         self.say_team = say_team
         self.message = message
 
-    def __str__(self):
+    def __unicode__(self):
         if self.say_team:
-            msg = 'say_team "%s"' % (self.message)
+            msg = u'say_team "%s"' % (self.message)
         else:
-            msg = 'say "%s"' % (self.message)
-        return ' '.join([super(ChatEvent, self).__str__(), msg])
+            msg = u'say "%s"' % (self.message)
+        return u' '.join([super(ChatEvent, self).__unicode__(), msg])
 
     @classmethod
     def from_re_match(cls, match):
@@ -574,7 +577,7 @@ class TeamAllianceEvent(BaseEvent):
 
     regex = ''.join([
         BaseEvent.regex,
-        r'Team "(?P<team_a>\w*?)" formed alliance with "(?P<team_b>\w*?)"',
+        ur'Team "(?P<team_a>\w*?)" formed alliance with "(?P<team_b>\w*?)"',
     ])
 
     def __init__(self, timestamp, team_a, team_b):
@@ -582,10 +585,10 @@ class TeamAllianceEvent(BaseEvent):
         self.team_a = team_a
         self.team_b = team_b
 
-    def __str__(self):
-        msg = 'Team "%s" formed alliance with "%s"' % (self.team_a,
+    def __unicode__(self):
+        msg = u'Team "%s" formed alliance with "%s"' % (self.team_a,
                                                        self.team_b)
-        return ' '.join([super(TeamAllianceEvent, self).__str__(), msg])
+        return u' '.join([super(TeamAllianceEvent, self).__unicode__(), msg])
 
 
 class RoundEndTeamEvent(BaseEvent):
@@ -594,8 +597,8 @@ class RoundEndTeamEvent(BaseEvent):
 
     regex = ''.join([
         BaseEvent.regex,
-        r'Team "(?P<team>\w*?)" scored "(?P<score>\d+)" with ',
-        r'"(?P<num_players>\d+)" players',
+        ur'Team "(?P<team>\w*?)" scored "(?P<score>\d+)" with ',
+        ur'"(?P<num_players>\d+)" players',
     ])
 
     def __init__(self, timestamp, team, score, num_players):
@@ -604,11 +607,11 @@ class RoundEndTeamEvent(BaseEvent):
         self.score = int(score)
         self.num_players = int(num_players)
 
-    def __str__(self):
-        msg = 'Team "%s" scored "%d" with "%d" players' % (self.team,
+    def __unicode__(self):
+        msg = u'Team "%s" scored "%d" with "%d" players' % (self.team,
                                                            self.score,
                                                            self.num_players)
-        return ' '.join([super(RoundEndTeamEvent, self).__str__(), msg])
+        return u' '.join([super(RoundEndTeamEvent, self).__unicode__(), msg])
 
 
 class PrivateChatEvent(PlayerTargetEvent):
@@ -618,9 +621,9 @@ class PrivateChatEvent(PlayerTargetEvent):
     regex = ''.join([
         BaseEvent.regex,
         PlayerTargetEvent.player_regex,
-        r' tell ',
+        ur' tell ',
         PlayerTargetEvent.target_regex,
-        r' message "(?P<message>.*)"',
+        ur' message "(?P<message>.*)"',
     ])
 
     def __init__(self, timestamp, player_name, player_uid, player_steam_id,
@@ -633,10 +636,10 @@ class PrivateChatEvent(PlayerTargetEvent):
                                                target_team)
         self.message = message
 
-    def __str__(self):
-        msg = '"%s" tell "%s" message "%s"' % (self.player, self.target,
+    def __unicode__(self):
+        msg = u'"%s" tell "%s" message "%s"' % (self.player, self.target,
                                                self.message)
-        return ' '.join([super(PrivateChatEvent, self).__str__(), msg])
+        return u' '.join([super(PrivateChatEvent, self).__unicode__(), msg])
 
 
 class RoundEndPlayerEvent(PlayerEvent):
@@ -645,9 +648,9 @@ class RoundEndPlayerEvent(PlayerEvent):
 
     regex = ''.join([
         BaseEvent.regex,
-        r'Player "(?P<player_name>.*)<(?P<uid>\d*)><(?P<steam_id>[\w:]*)>',
-        r'<(?P<team>\w*)>"\s*',
-        r'scored "(?P<score>\d+)"',
+        ur'Player "(?P<player_name>.*)<(?P<uid>\d*)><(?P<steam_id>[\w:]*)>',
+        ur'<(?P<team>\w*)>"\s*',
+        ur'scored "(?P<score>\d+)"',
     ])
 
     def __init__(self, timestamp, player_name, uid, steam_id, team, score):
@@ -655,11 +658,11 @@ class RoundEndPlayerEvent(PlayerEvent):
                                                   steam_id, team)
         self.score = int(score)
 
-    def __str__(self):
-        return ' '.join([
-            'L %s:' % (self.timestamp_to_str(self.timestamp)),
-            'Player "%s"' % (self.player),
-            'scored "%d"' % (self.score),
+    def __unicode__(self):
+        return u' '.join([
+            u'L %s:' % (self.timestamp_to_str(self.timestamp)),
+            u'Player "%s"' % (self.player),
+            u'scored "%d"' % (self.score),
         ])
 
 
@@ -669,7 +672,7 @@ class WeaponSelectEvent(PlayerEvent):
 
     regex = ''.join([
         PlayerEvent.regex,
-        r'selected weapon "(?P<weapon>\w*)"',
+        ur'selected weapon "(?P<weapon>\w*)"',
     ])
 
     def __init__(self, timestamp, player_name, uid, steam_id, team,
@@ -678,9 +681,9 @@ class WeaponSelectEvent(PlayerEvent):
                                                 steam_id, team)
         self.weapon = weapon
 
-    def __str__(self):
+    def __unicode__(self):
         msg = 'selected weapon "%s"' % (self.weapon)
-        return ' '.join([super(WeaponSelectEvent, self).__str__(), msg])
+        return ' '.join([super(WeaponSelectEvent, self).__unicode__(), msg])
 
 
 class WeaponPickupEvent(PlayerEvent):
@@ -689,7 +692,7 @@ class WeaponPickupEvent(PlayerEvent):
 
     regex = ''.join([
         PlayerEvent.regex,
-        r'acquired weapon "(?P<weapon>\w*)"',
+        ur'acquired weapon "(?P<weapon>\w*)"',
     ])
 
     def __init__(self, timestamp, player_name, uid, steam_id, team,
@@ -698,9 +701,9 @@ class WeaponPickupEvent(PlayerEvent):
                                                 steam_id, team)
         self.weapon = weapon
 
-    def __str__(self):
-        msg = 'acquired weapon "%s"' % (self.weapon)
-        return ' '.join([super(WeaponPickupEvent, self).__str__(), msg])
+    def __unicode__(self):
+        msg = u'acquired weapon "%s"' % (self.weapon)
+        return u' '.join([super(WeaponPickupEvent, self).__unicode__(), msg])
 
 
 STANDARD_EVENTS = [

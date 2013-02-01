@@ -21,7 +21,7 @@ setup(name='pysrcds',
           'Programming Language :: Python',
           'Topic :: Games/Entertainment :: First Person Shooters',
           'Topic :: Software Development :: Libraries :: Python Modules',
-     ]
+     ],
      long_description=\
 '''
 =======

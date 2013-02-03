@@ -488,14 +488,17 @@ class PlayerActionEvent(PlayerEvent):
 
     regex = ''.join([
         PlayerEvent.regex,
-        ur'triggered "(?P<action>.*)"',
+        ur'triggered "(?P<action>.*?)"',
     ])
 
     def __init__(self, timestamp, player_name, uid, steam_id, team,
                  action):
         super(PlayerActionEvent, self).__init__(timestamp, player_name, uid,
                                                 steam_id, team)
-        self.action = action
+        if isinstance(action, str):
+            self.action = unicode(action, 'utf-8', 'replace')
+        else:
+            self.action = action
 
     def __unicode__(self):
         msg = u'triggered "%s"' % (self.action)

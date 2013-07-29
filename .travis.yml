@@ -8,7 +8,7 @@ install:
   - pip install coveralls --use-mirrors
 
 script:
-  - nosetests --with-coverage
+  - nosetests --with-coverage --cover-package=srcds
 
 after_success:
   - coveralls

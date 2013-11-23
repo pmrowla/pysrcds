@@ -48,8 +48,8 @@ class RconConnection(object):
         self.server = server
         self.port = port
         self._sock = socket.create_connection((server, port))
-        self._authenticate(password)
         self.pkt_id = itertools.count(1)
+        self._authenticate(password)
 
     def _authenticate(self, password):
         """Authenticate with the server using the given password"""

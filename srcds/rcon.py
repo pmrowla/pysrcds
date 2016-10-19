@@ -16,10 +16,7 @@ SERVERDATA_RESPONSE_VALUE = 0
 
 
 class RconPacket(object):
-
     """RCON packet"""
-
-    _struct = struct.Struct('<3i')
 
     def __init__(self, pkt_id=0, pkt_type=-1, body=''):
         self.pkt_id = pkt_id
@@ -36,8 +33,8 @@ class RconPacket(object):
 
     def pack(self):
         """Return the packed version of the packet"""
-        header = self._struct.pack(self.size(), self.pkt_id, self.pkt_type)
-        return '%s%s\x00\x00' % (header, self.body)
+        return struct.pack('<3i{0}s'.format(len(self.body) + 2),
+                           self.size(), self.pkt_id, self.pkt_type, bytearray(self.body, 'utf-8'))
 
 
 class RconConnection(object):
@@ -53,7 +50,7 @@ class RconConnection(object):
 
     def _authenticate(self, password):
         """Authenticate with the server using the given password"""
-        auth_pkt = RconPacket(self.pkt_id.next(), SERVERDATA_AUTH, password)
+        auth_pkt = RconPacket(next(self.pkt_id), SERVERDATA_AUTH, password)
         self._send_pkt(auth_pkt)
         # The server will respond with a SERVERDATA_RESPONSE_VALUE followed by
         # a SERVERDATA_AUTH_RESPONSE
@@ -69,7 +66,7 @@ class RconConnection(object):
 
         Return the response body
         """
-        cmd_pkt = RconPacket(self.pkt_id.next(), SERVERDATA_EXECCOMMAND,
+        cmd_pkt = RconPacket(next(self.pkt_id), SERVERDATA_EXECCOMMAND,
                              command)
         self._send_pkt(cmd_pkt)
         resp = self.read_response(cmd_pkt, True)
@@ -80,17 +77,17 @@ class RconConnection(object):
         if pkt.size() > 4096:
             raise RconSizeError('pkt_size > 4096 bytes')
         data = pkt.pack()
-        bytes_sent = 0
-        while bytes_sent < len(data):
-            bytes_sent += self._sock.send(data[bytes_sent])
+        self._sock.sendall(data)
 
     def _recv_pkt(self):
         """Read one RCON packet"""
-        header = self._sock.recv(struct.calcsize('<3i'))
+        while True:
+            header = self._sock.recv(struct.calcsize('<3i'))
+            if len(header) != 0:
+                break
+
         (pkt_size, pkt_id, pkt_type) = struct.unpack('<3i', header)
         body = self._sock.recv(pkt_size - 8)
-        # Strip the 2 trailing nulls from the body
-        body.rstrip('\x00')
         return RconPacket(pkt_id, pkt_type, body)
 
     def read_response(self, request=None, multi=False):
@@ -113,7 +110,7 @@ class RconConnection(object):
 
     def _read_multi_response(self, req_pkt):
         """Return concatenated multi-packet response"""
-        chk_pkt = RconPacket(self.pkt_id.next(), SERVERDATA_RESPONSE_VALUE)
+        chk_pkt = RconPacket(next(self.pkt_id), SERVERDATA_RESPONSE_VALUE)
         self._send_pkt(chk_pkt)
         # According to the Valve wiki, a server will mirror a
         # SERVERDATA_RESPONSE_VALUE packet and then send an additional response
@@ -132,7 +129,7 @@ class RconConnection(object):
         # Read and ignore the extra empty body response
         self._recv_pkt()
         return RconPacket(req_pkt.pkt_id, SERVERDATA_RESPONSE_VALUE,
-                          ''.join(body_parts))
+                          ''.join(str(body_parts)))
 
 
 class RconError(Exception):

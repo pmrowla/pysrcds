@@ -12,10 +12,23 @@ RCON and also provides the ability to parse Source engine logs. There are also
 some utility classes that may be useful for developing other Source related
 functionality.
 
+Python 2.7 and Python 3.5+ are supported.
+
+Installation
+------------
+
+```
+pip install pysrcds
+```
+
+
+HL Log Parsing
+--------------
+
 For a log parsing example see [goonpug-trueskill](https://github.com/goonpug/goonpug-trueskill).
 
 RCON Usage
--------------
+----------
 
 ```python
 from srcds.rcon import RconConnection

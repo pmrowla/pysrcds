@@ -18,6 +18,10 @@ setup(
         'Programming Language :: Python',
         'Topic :: Games/Entertainment :: First Person Shooters',
         'Topic :: Software Development :: Libraries :: Python Modules',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
     ],
     install_requres=['future'],
     long_description='''

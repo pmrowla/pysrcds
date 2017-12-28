@@ -1,11 +1,12 @@
 language: python
 python:
-  #- "3.2"
   - 2.7
+  - 3.5
+  - 3.6
 
 install:
-  - pip install . --use-mirrors
-  - pip install coveralls --use-mirrors
+  - pip install .
+  - pip install coveralls
 
 script:
   - nosetests --with-coverage --cover-package=srcds

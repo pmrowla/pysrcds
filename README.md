@@ -12,6 +12,22 @@ RCON and also provides the ability to parse Source engine logs. There are also
 some utility classes that may be useful for developing other Source related
 functionality.
 
+For a log parsing example see [goonpug-trueskill](https://github.com/goonpug/goonpug-trueskill).
+
+RCON Usage
+-------------
+
+```python
+from srcds.rcon import RconConnection
+
+conn = RconConnection('127.0.0.1', port=27015, password='password')
+conn.exec_command('status')
+
+# For servers that do not support multipart RCON responses like factorio,
+# enable the single_packet_mode option
+factorio_conn = RconConnection('127.0.0.1', single_packet_mode=True)
+```
+
 License
 -------
 

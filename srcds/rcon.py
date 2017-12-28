@@ -1,8 +1,6 @@
 # Copyright (C) 2013 Peter Rowlands
 """Source server RCON communications module"""
 
-
-from __future__ import division, absolute_import
 import struct
 import socket
 import itertools

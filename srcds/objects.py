@@ -6,8 +6,9 @@ Contains base classes for all standard Source server objects.
 
 """
 
+from __future__ import division, unicode_literals
+from future.utils import python_2_unicode_compatible
 
-from __future__ import division
 import re
 
 
@@ -24,17 +25,18 @@ STEAM_ACCOUNT_TYPE = {
     'invalid': 0,
     'individual': 1,
     'multiseat': 2,
-    'gameserveur': 3,
-    'anongameserveur': 4,
+    'gameserver': 3,
+    'anongameserver': 4,
     'pending': 5,
-    'contentserveur': 6,
+    'contentserver': 6,
     'clan': 7,
     'chat': 8,
-    'p2p_superseedeur': 9,
-    'anonuseur': 10,
+    'p2p_superseeder': 9,
+    'anonuser': 10,
 }
 
 
+@python_2_unicode_compatible
 class SteamId(object):
 
     """Steam ID class"""
@@ -55,17 +57,17 @@ class SteamId(object):
              self.instance,
              self.id_type,
              self.universe) = self.split_id64(steam_id)
-        elif not isinstance(steam_id, str) and not isinstance(steam_id, unicode):
+        elif not isinstance(steam_id, str):
             raise TypeError('Invalid type for steam_id')
         else:
-            if unicode(steam_id) == u'BOT':
+            if str(steam_id) == u'BOT':
                 self.is_bot = True
-            elif unicode(steam_id) == u'Console':
-                self.is_console == True
+            elif str(steam_id) == u'Console':
+                self.is_console = True
             else:
                 pattern = ''.join([
-                    ur'STEAM_(?P<universe>[0-5]):(?P<y_part>\d+):',
-                    ur'(?P<id_number>\d+)',
+                    r'STEAM_(?P<universe>[0-5]):(?P<y_part>\d+):',
+                    r'(?P<id_number>\d+)',
                 ])
                 match = re.match(pattern, steam_id, re.I | re.U)
                 if not match:
@@ -77,9 +79,6 @@ class SteamId(object):
                 self.id_type = id_type
 
     def __str__(self):
-        return unicode(self).encode('utf-8')
-
-    def __unicode__(self):
         if self.is_bot:
             return u'BOT'
         elif self.is_console:
@@ -115,6 +114,7 @@ class SteamId(object):
         return (id_number, y_part, instance, id_type, universe)
 
 
+@python_2_unicode_compatible
 class BasePlayer(object):
 
     """Source player object"""
@@ -122,26 +122,19 @@ class BasePlayer(object):
     def __init__(self, name, uid, steam_id, team=u''):
         if not isinstance(steam_id, SteamId):
             raise TypeError('Expected type SteamId for steam_id')
-        if isinstance(name, str):
-            name = unicode(name, 'utf-8', 'replace')
         self.name = name
-        if isinstance(uid, str) or isinstance(uid, unicode):
-            uid = int(uid)
-        self.uid = uid
+        self.uid = int(uid)
         self.steam_id = steam_id
         if team is None:
             team = u''
         self.team = team
 
     def __str__(self):
-        return unicode(self).encode('utf-8')
-
-    def __unicode__(self):
         msg = [
             self.name,
-            u'<%d>' % self.uid,
-            u'<%s>' % self.steam_id,
+            '<%d>' % self.uid,
+            '<%s>' % self.steam_id,
         ]
         if self.team is not None:
             msg.append(u'<%s>' % self.team)
-        return u''.join(msg)
+        return ''.join(msg)

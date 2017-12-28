@@ -6,7 +6,6 @@ Complies with the HL Log Standard rev. 1.03
 
 """
 
-
 from __future__ import division, absolute_import
 import os
 import re
@@ -59,5 +58,5 @@ class SourceLogParser(object):
         """Write the events back to a file object"""
         lines = []
         for event in self.events:
-            lines.append(unicode(self.event))
+            lines.append(str(self.event))
         fileobject.write(os.linesep.join(lines))

@@ -61,10 +61,11 @@ class RconConnection(object):
         """Authenticate with the server using the given password."""
         auth_pkt = RconPacket(next(self.pkt_id), SERVERDATA_AUTH, password)
         self._send_pkt(auth_pkt)
-        # The server will respond with a SERVERDATA_RESPONSE_VALUE followed by
-        # a SERVERDATA_AUTH_RESPONSE
-        self.read_response(auth_pkt)
-        auth_resp = self.read_response()
+        # The server should respond with a SERVERDATA_RESPONSE_VALUE followed by SERVERDATA_AUTH_RESPONSE.
+        # Note that some server types omit the initial SERVERDATA_RESPONSE_VALUE packet.
+        auth_resp = self.read_response(auth_pkt)
+        if auth_resp.pkt_type == SERVERDATA_RESPONSE_VALUE:
+            auth_resp = self.read_response()
         if auth_resp.pkt_type != SERVERDATA_AUTH_RESPONSE:
             raise RconError('Received invalid auth response packet')
         if auth_resp.pkt_id == -1:

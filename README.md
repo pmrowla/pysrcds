@@ -3,7 +3,7 @@ pysrcds
 
 Python library for interacting with Source engine dedicated servers.
 
-[![Build Status](https://travis-ci.org/pmrowla/pysrcds.png)](https://travis-ci.org/pmrowla/pysrcds)
+[![Build Status](https://travis-ci.org/pmrowla/pysrcds.svg?branch=master)](https://travis-ci.org/pmrowla/pysrcds)
 [![Coverage Status](https://coveralls.io/repos/github/pmrowla/pysrcds/badge.svg?branch=master)](https://coveralls.io/github/pmrowla/pysrcds?branch=master)
 [![PyPI version](https://badge.fury.io/py/pysrcds.svg)](https://pypi.python.org/pypi/pysrcds/)
 

@@ -34,7 +34,10 @@ RCON Usage
 from srcds.rcon import RconConnection
 
 conn = RconConnection('127.0.0.1', port=27015, password='password')
-conn.exec_command('status')
+response = conn.exec_command('status')
+# Response content can be accessed via str(response) or response.body
+# Response content will be a utf-8 encoded string in most cases, but it may depend on the
+# server type.
 
 # For servers that do not support multipart RCON responses like factorio,
 # enable the single_packet_mode option

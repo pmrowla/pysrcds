@@ -57,8 +57,6 @@ class SteamId(object):
              self.instance,
              self.id_type,
              self.universe) = self.split_id64(steam_id)
-        elif not isinstance(steam_id, str):
-            raise TypeError('Invalid type for steam_id')
         else:
             if str(steam_id) == u'BOT':
                 self.is_bot = True

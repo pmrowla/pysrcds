@@ -27,15 +27,15 @@ class BaseEvent(object):
     def __init__(self, timestamp):
         if isinstance(timestamp, datetime):
             self.timestamp = timestamp
-        elif isinstance(timestamp, str):
+        else:
             self.timestamp = datetime.strptime(timestamp,
                                                '%m/%d/%Y - %H:%M:%S')
-        else:
-            raise TypeError('Unexpected type for timestamp')
 
-    def __str__(self):
+    def text(self):
         """Return a valid HL Log Standard log entry string"""
         return 'L {}:'.format(self.timestamp_to_str(self.timestamp))
+
+    __str__ = text
 
     @classmethod
     def timestamp_to_str(cls, timestamp):
@@ -67,14 +67,16 @@ class CvarEvent(BaseEvent):
         self.start = start
         self.end = end
 
-    def __str__(self):
+    def text(self):
         if self.start:
             msg = 'Server cvars start'
         elif self.end:
             msg = 'Server cvars end'
         else:
             msg = 'Server cvar "%s" = "%s"' % (self.cvar, self.value)
-        return ' '.join([super(CvarEvent, self).__str__(), msg])
+        return ' '.join([super(CvarEvent, self).text(), msg])
+
+    __str__ = text
 
     @classmethod
     def from_re_match(cls, match):
@@ -109,13 +111,15 @@ class LogFileEvent(BaseEvent):
         self.started = started
         self.closed = closed
 
-    def __str__(self):
+    def text(self):
         if self.started:
             msg = 'Log file started (file "%s") (game "%s") (version "%s")' % (
                 self.filename, self.game, self.version)
         else:
             msg = 'Log file closed'
-        return ' '.join([super(LogFileEvent, self).__str__(), msg])
+        return ' '.join([super(LogFileEvent, self).text(), msg])
+
+    __str__ = text
 
     @classmethod
     def from_re_match(cls, match):
@@ -148,12 +152,14 @@ class ChangeMapEvent(BaseEvent):
         self.started = started
         self.crc = crc
 
-    def __str__(self):
+    def text(self):
         if self.loading:
             msg = 'Loading map "%s"' % (self.mapname)
         else:
             msg = 'Started map "%s" (CRC "%s")' % (self.mapname, self.crc)
-        return ' '.join([super(ChangeMapEvent, self).__str__(), msg])
+        return ' '.join([super(ChangeMapEvent, self).text(), msg])
+
+    __str__ = text
 
     @classmethod
     def from_re_match(cls, match):
@@ -185,14 +191,16 @@ class RconEvent(BaseEvent):
         self.address = address
         self.passed = passed
 
-    def __str__(self):
+    def text(self):
         if self.passed:
             msg = 'Rcon: "rcon challenge "%s" command" from "%s:%d"' % (
                 self.password, self.address[0], self.address[1])
         else:
             msg = 'Bad Rcon: "rcon challenge "%s" command" from "%s:%d"' % (
                 self.password, self.address[0], self.address[1])
-        return ' '.join([super(RconEvent, self).__str__(), msg])
+        return ' '.join([super(RconEvent, self).text(), msg])
+
+    __str__ = text
 
     @classmethod
     def from_re_match(cls, match):
@@ -218,9 +226,11 @@ class PlayerEvent(BaseEvent):
         super(PlayerEvent, self).__init__(timestamp)
         self.player = BasePlayer(player_name, uid, SteamId(steam_id), team)
 
-    def __str__(self):
+    def text(self):
         msg = '"%s"' % self.player
-        return ' '.join([super(PlayerEvent, self).__str__(), msg])
+        return ' '.join([super(PlayerEvent, self).text(), msg])
+
+    __str__ = text
 
 
 @python_2_unicode_compatible
@@ -242,13 +252,15 @@ class ConnectionEvent(PlayerEvent):
         super(ConnectionEvent, self).__init__(timestamp, player_name, uid,
                                               steam_id, team)
 
-    def __str__(self):
+    def text(self):
         if isinstance(self.address, tuple):
             msg = 'connected, address "%s:%d"' % (self.address[0],
                                                   self.address[1])
         else:
             msg = 'connected, address "%s"' % (self.address)
-        return ' '.join([super(ConnectionEvent, self).__str__(), msg])
+        return ' '.join([super(ConnectionEvent, self).text(), msg])
+
+    __str__ = text
 
     @classmethod
     def from_re_match(cls, match):
@@ -271,9 +283,11 @@ class ValidationEvent(PlayerEvent):
         r'STEAM USERID validated',
     ])
 
-    def __str__(self):
+    def text(self):
         msg = 'STEAM USERID validated'
-        return ' '.join([super(ValidationEvent, self).__str__(), msg])
+        return ' '.join([super(ValidationEvent, self).text(), msg])
+
+    __str__ = text
 
 
 @python_2_unicode_compatible
@@ -286,9 +300,11 @@ class EnterGameEvent(PlayerEvent):
         r'entered the game',
     ])
 
-    def __str__(self):
+    def text(self):
         msg = 'entered the game'
-        return ' '.join([super(EnterGameEvent, self).__str__(), msg])
+        return ' '.join([super(EnterGameEvent, self).text(), msg])
+
+    __str__ = text
 
 
 @python_2_unicode_compatible
@@ -301,9 +317,11 @@ class DisconnectionEvent(PlayerEvent):
         r'disconnected',
     ])
 
-    def __str__(self):
+    def text(self):
         msg = 'disconnected'
-        return ' '.join([super(DisconnectionEvent, self).__str__(), msg])
+        return ' '.join([super(DisconnectionEvent, self).text(), msg])
+
+    __str__ = text
 
 
 @python_2_unicode_compatible
@@ -323,12 +341,14 @@ class KickEvent(PlayerEvent):
                                         steam_id, team)
         self.message = message
 
-    def __str__(self):
+    def text(self):
         return ' '.join([
             'L %s:' % (self.timestamp_to_str(self.timestamp)),
             'Kick: "%s"' % (self.player),
             'was kicked by "Console" (message "%s")' % (self.message),
         ])
+
+    __str__ = text
 
 
 @python_2_unicode_compatible
@@ -346,9 +366,11 @@ class SuicideEvent(PlayerEvent):
                                            steam_id, team)
         self.weapon = weapon
 
-    def __str__(self):
+    def text(self):
         msg = 'committed suicide with "%s"' % (self.weapon)
-        return ' '.join([super(SuicideEvent, self).__str__(), msg])
+        return ' '.join([super(SuicideEvent, self).text(), msg])
+
+    __str__ = text
 
 
 @python_2_unicode_compatible
@@ -367,9 +389,11 @@ class TeamSelectionEvent(PlayerEvent):
                                                  steam_id, team)
         self.new_team = new_team
 
-    def __str__(self):
+    def text(self):
         msg = 'joined team "%s"' % (self.new_team)
-        return ' '.join([super(TeamSelectionEvent, self).__str__(), msg])
+        return ' '.join([super(TeamSelectionEvent, self).text(), msg])
+
+    __str__ = text
 
 
 @python_2_unicode_compatible
@@ -388,9 +412,11 @@ class RoleSelectionEvent(PlayerEvent):
                                                  steam_id, team)
         self.role = role
 
-    def __str__(self):
+    def text(self):
         msg = 'changed role to "%s"' % (self.role)
-        return ' '.join([super(RoleSelectionEvent, self).__str__(), msg])
+        return ' '.join([super(RoleSelectionEvent, self).text(), msg])
+
+    __str__ = text
 
 
 @python_2_unicode_compatible
@@ -409,9 +435,11 @@ class ChangeNameEvent(PlayerEvent):
                                               steam_id, team)
         self.new_name = new_name
 
-    def __str__(self):
+    def text(self):
         msg = 'changed name to "%s"' % (self.new_name)
-        return ' '.join([super(ChangeNameEvent, self).__str__(), msg])
+        return ' '.join([super(ChangeNameEvent, self).text(), msg])
+
+    __str__ = text
 
 
 @python_2_unicode_compatible
@@ -460,10 +488,12 @@ class KillEvent(PlayerTargetEvent):
                                         target_steam_id, target_team)
         self.weapon = weapon
 
-    def __str__(self):
+    def text(self):
         msg = '"%s" killed "%s" with "%s"' % (self.player, self.target,
                                               self.weapon)
-        return ' '.join([super(KillEvent, self).__str__(), msg])
+        return ' '.join([super(KillEvent, self).text(), msg])
+
+    __str__ = text
 
 
 @python_2_unicode_compatible
@@ -489,12 +519,14 @@ class AttackEvent(PlayerTargetEvent):
         self.weapon = weapon
         self.damage = int(damage)
 
-    def __str__(self):
+    def text(self):
         msg = '"%s" attacked "%s" with "%s" (damage "%d")' % (self.player,
                                                               self.target,
                                                               self.weapon,
                                                               self.damage)
-        return ' '.join([super(AttackEvent, self).__str__(), msg])
+        return ' '.join([super(AttackEvent, self).text(), msg])
+
+    __str__ = text
 
 
 @python_2_unicode_compatible
@@ -513,9 +545,11 @@ class PlayerActionEvent(PlayerEvent):
                                                 steam_id, team)
         self.action = action
 
-    def __str__(self):
+    def text(self):
         msg = 'triggered "%s"' % (self.action)
-        return ' '.join([super(PlayerActionEvent, self).__str__(), msg])
+        return ' '.join([super(PlayerActionEvent, self).text(), msg])
+
+    __str__ = text
 
 
 @python_2_unicode_compatible
@@ -533,9 +567,11 @@ class TeamActionEvent(BaseEvent):
         self.team = team
         self.action = action
 
-    def __str__(self):
+    def text(self):
         msg = 'Team "%s" triggered "%s"' % (self.team, self.action)
-        return ' '.join([super(TeamActionEvent, self).__str__(), msg])
+        return ' '.join([super(TeamActionEvent, self).text(), msg])
+
+    __str__ = text
 
 
 @python_2_unicode_compatible
@@ -552,9 +588,11 @@ class WorldActionEvent(BaseEvent):
         super(WorldActionEvent, self).__init__(timestamp)
         self.action = action
 
-    def __str__(self):
+    def text(self):
         msg = 'World triggered "%s"' % (self.action)
-        return ' '.join([super(WorldActionEvent, self).__str__(), msg])
+        return ' '.join([super(WorldActionEvent, self).text(), msg])
+
+    __str__ = text
 
 
 @python_2_unicode_compatible
@@ -574,12 +612,14 @@ class ChatEvent(PlayerEvent):
         self.say_team = say_team
         self.message = message
 
-    def __str__(self):
+    def text(self):
         if self.say_team:
             msg = 'say_team "%s"' % (self.message)
         else:
             msg = 'say "%s"' % (self.message)
-        return ' '.join([super(ChatEvent, self).__str__(), msg])
+        return ' '.join([super(ChatEvent, self).text(), msg])
+
+    __str__ = text
 
     @classmethod
     def from_re_match(cls, match):
@@ -605,10 +645,12 @@ class TeamAllianceEvent(BaseEvent):
         self.team_a = team_a
         self.team_b = team_b
 
-    def __str__(self):
+    def text(self):
         msg = 'Team "%s" formed alliance with "%s"' % (self.team_a,
                                                        self.team_b)
-        return ' '.join([super(TeamAllianceEvent, self).__str__(), msg])
+        return ' '.join([super(TeamAllianceEvent, self).text(), msg])
+
+    __str__ = text
 
 
 @python_2_unicode_compatible
@@ -628,11 +670,13 @@ class RoundEndTeamEvent(BaseEvent):
         self.score = int(score)
         self.num_players = int(num_players)
 
-    def __str__(self):
+    def text(self):
         msg = 'Team "%s" scored "%d" with "%d" players' % (self.team,
                                                            self.score,
                                                            self.num_players)
-        return ' '.join([super(RoundEndTeamEvent, self).__str__(), msg])
+        return ' '.join([super(RoundEndTeamEvent, self).text(), msg])
+
+    __str__ = text
 
 
 @python_2_unicode_compatible
@@ -658,10 +702,12 @@ class PrivateChatEvent(PlayerTargetEvent):
                                                target_team)
         self.message = message
 
-    def __str__(self):
+    def text(self):
         msg = '"%s" tell "%s" message "%s"' % (self.player, self.target,
                                                self.message)
-        return ' '.join([super(PrivateChatEvent, self).__str__(), msg])
+        return ' '.join([super(PrivateChatEvent, self).text(), msg])
+
+    __str__ = text
 
 
 @python_2_unicode_compatible
@@ -681,12 +727,14 @@ class RoundEndPlayerEvent(PlayerEvent):
                                                   steam_id, team)
         self.score = int(score)
 
-    def __str__(self):
+    def text(self):
         return ' '.join([
             'L %s:' % (self.timestamp_to_str(self.timestamp)),
             'Player "%s"' % (self.player),
             'scored "%d"' % (self.score),
         ])
+
+    __str__ = text
 
 
 @python_2_unicode_compatible
@@ -705,9 +753,11 @@ class WeaponSelectEvent(PlayerEvent):
                                                 steam_id, team)
         self.weapon = weapon
 
-    def __str__(self):
+    def text(self):
         msg = 'selected weapon "%s"' % (self.weapon)
-        return ' '.join([super(WeaponSelectEvent, self).__str__(), msg])
+        return ' '.join([super(WeaponSelectEvent, self).text(), msg])
+
+    __str__ = text
 
 
 @python_2_unicode_compatible
@@ -726,9 +776,11 @@ class WeaponPickupEvent(PlayerEvent):
                                                 steam_id, team)
         self.weapon = weapon
 
-    def __str__(self):
+    def text(self):
         msg = 'acquired weapon "%s"' % (self.weapon)
-        return ' '.join([super(WeaponPickupEvent, self).__str__(), msg])
+        return ' '.join([super(WeaponPickupEvent, self).text(), msg])
+
+    __str__ = text
 
 
 STANDARD_EVENTS = [

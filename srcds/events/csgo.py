@@ -30,7 +30,7 @@ class SwitchTeamEvent(PlayerEvent):
         self.orig_team = orig_team
         self.new_team = new_team
 
-    def __str__(self):
+    def text(self):
         player = self.player
         player.team = None
         msg = ' '.join([
@@ -38,7 +38,9 @@ class SwitchTeamEvent(PlayerEvent):
             'switched from team <%s> to <%s>' % (self.orig_team,
                                                  self.new_team),
         ])
-        return ' '.join([super(PlayerEvent, self).__str__(), msg])
+        return ' '.join([super(PlayerEvent, self).text(), msg])
+
+    __str__ = text
 
 
 @python_2_unicode_compatible
@@ -56,9 +58,11 @@ class BuyEvent(PlayerEvent):
                                        team)
         self.item = item
 
-    def __str__(self):
+    def text(self):
         msg = 'purchased "%s"' % (self.item)
-        return ' '.join([super(BuyEvent, self).__str__(), msg])
+        return ' '.join([super(BuyEvent, self).text(), msg])
+
+    __str__ = text
 
 
 @python_2_unicode_compatible
@@ -80,10 +84,12 @@ class ThrowEvent(PlayerEvent):
         self.location = location
         self.nade = nade
 
-    def __str__(self):
+    def text(self):
         msg = 'threw %s [%d %d %d]' % (self.nade, self.location[0],
                                        self.location[1], self.location[2])
-        return ' '.join([super(ThrowEvent, self).__str__(), msg])
+        return ' '.join([super(ThrowEvent, self).text(), msg])
+
+    __str__ = text
 
     @classmethod
     def from_re_match(cls, match):
@@ -115,9 +121,11 @@ class CsgoAssistEvent(PlayerTargetEvent):
                                               player_team, target_name, target_uid,
                                               target_steam_id, target_team)
 
-    def __str__(self):
+    def text(self):
         msg = '"%s" assisted killing "%s" ' % (self.player, self.target)
-        return ' '.join([super(CsgoAssistEvent, self).__str__(), msg])
+        return ' '.join([super(CsgoAssistEvent, self).text(), msg])
+
+    __str__ = text
 
 
 @python_2_unicode_compatible
@@ -155,7 +163,7 @@ class CsgoKillEvent(KillEvent):
         self.target_location = target_location
         self.headshot = headshot
 
-    def __str__(self):
+    def text(self):
         msg = [
             'L %s:' % (self.timestamp_to_str(self.timestamp)),
             '"%s" [%d %d %d]' % (self.player, self.player_location[0],
@@ -170,6 +178,8 @@ class CsgoKillEvent(KillEvent):
         if self.headshot:
             msg.append('(headshot)')
         return ' '.join(msg)
+
+    __str__ = text
 
     @classmethod
     def from_re_match(cls, match):
@@ -230,7 +240,7 @@ class CsgoAttackEvent(AttackEvent):
         self.armor = int(armor)
         self.hitgroup = hitgroup
 
-    def __str__(self):
+    def text(self):
         msg = [
             'L %s:' % (self.timestamp_to_str(self.timestamp)),
             '"%s" [%d %d %d]' % (self.player, self.player_location[0],
@@ -248,6 +258,8 @@ class CsgoAttackEvent(AttackEvent):
             '(hitgroup "%s")' % (self.hitgroup),
         ]
         return ' '.join(msg)
+
+    __str__ = text
 
     @classmethod
     def from_re_match(cls, match):

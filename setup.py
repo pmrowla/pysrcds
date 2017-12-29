@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name='pysrcds',
-    version='0.1.5',
+    version='0.1.6.dev',
     description='Python library for interacting with Source engine dedicated'
                 ' servers',
     author='Peter Rowlands',

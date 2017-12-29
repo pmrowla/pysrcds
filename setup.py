@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
+from setuptools import setup
 
 setup(
     name='pysrcds',
@@ -23,7 +23,7 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
     ],
-    install_requres=['future'],
+    install_requires=['future'],
     long_description='''
 =======
 pysrcds
